@@ -1,0 +1,262 @@
+:root {
+  color: #1f1a17;
+  background: #efeae2;
+  font-family: "Avenir Next", "Segoe UI", sans-serif;
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+button,
+input {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.sheet {
+  width: min(100%, 32rem);
+  margin: 0 auto;
+  padding: 2.75rem 1.25rem 4rem;
+}
+
+h1 {
+  margin: 0;
+  font-family: Georgia, "Iowan Old Style", Palatino, serif;
+  font-size: 2.75rem;
+  font-weight: 500;
+  letter-spacing: -0.04em;
+}
+
+.unit {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.unit span,
+.stepper span,
+.left span,
+.summary dt,
+.remove,
+.cancel {
+  color: #7a7168;
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.unit input,
+.left input {
+  width: 7rem;
+  border: none;
+  border-bottom: 1px solid #d4cbbf;
+  background: transparent;
+  font-family: Georgia, "Iowan Old Style", Palatino, serif;
+  font-size: 1.6rem;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.unit input:focus,
+.left input:focus,
+.name:focus,
+.add input:focus {
+  outline: none;
+  border-bottom-color: #1f1a17;
+}
+
+.players {
+  margin: 1.5rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.player {
+  padding: 1.1rem 0;
+  border-top: 1px solid #e4dbd0;
+}
+
+.player-top,
+.controls,
+.stepper,
+.add,
+.confirm,
+.summary div {
+  display: flex;
+  align-items: center;
+}
+
+.player-top {
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.name,
+.add input {
+  min-width: 0;
+  border: none;
+  border-bottom: 1px solid transparent;
+  background: transparent;
+  font-size: 1.2rem;
+}
+
+.name {
+  flex: 1;
+}
+
+.net,
+.summary dd {
+  margin: 0;
+  font-family: Georgia, "Iowan Old Style", Palatino, serif;
+  font-variant-numeric: tabular-nums;
+}
+
+.net {
+  font-size: 1.7rem;
+}
+
+.controls {
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  margin-top: 0.85rem;
+}
+
+.stepper {
+  gap: 0.4rem;
+}
+
+.stepper button,
+.add button,
+.confirm button,
+.clear {
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  border: 1px solid #d4cbbf;
+  border-radius: 999px;
+  background: #fffcf8;
+}
+
+.stepper strong {
+  min-width: 1.5rem;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.left {
+  display: flex;
+  align-items: baseline;
+  gap: 0.55rem;
+  margin-left: auto;
+}
+
+.left input {
+  width: 5.5rem;
+  font-size: 1.25rem;
+}
+
+.remove,
+.cancel {
+  border: none;
+  background: none;
+  padding: 0;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 0.95rem;
+}
+
+.add {
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e4dbd0;
+}
+
+.add input {
+  flex: 1;
+  border-bottom-color: #d4cbbf;
+  padding: 0.4rem 0;
+}
+
+.add button {
+  padding: 0 1.1rem;
+}
+
+.summary {
+  margin: 2rem 0 0;
+}
+
+.summary div {
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.45rem 0;
+}
+
+.summary dd {
+  font-size: 1.25rem;
+}
+
+.up {
+  color: #1d6b45;
+}
+
+.down {
+  color: #9d342c;
+}
+
+.even {
+  color: #7a7168;
+}
+
+.clear,
+.confirm {
+  margin-top: 2rem;
+}
+
+.clear {
+  width: 100%;
+  border-radius: 999px;
+}
+
+.clear:disabled {
+  cursor: default;
+  opacity: 0.4;
+}
+
+.confirm {
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.confirm p {
+  margin: 0;
+  flex: 1;
+}
+
+.confirm button {
+  padding: 0 1rem;
+}
+
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
+  margin: 0;
+  -webkit-appearance: none;
+}
+
+input[type='number'] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
