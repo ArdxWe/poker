@@ -1,4 +1,4 @@
-# Felt
+# Table
 
 One table. Count each player's buy-ins and the chips they still hold.
 

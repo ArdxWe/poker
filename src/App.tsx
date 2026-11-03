@@ -73,7 +73,7 @@ export function App() {
   return (
     <main className="sheet">
       <header>
-        <h1>Felt</h1>
+        <h1>Table</h1>
       </header>
 
       <label className="unit">
@@ -88,24 +88,29 @@ export function App() {
         />
       </label>
 
-      <ul className="players">
-        {session.players.map((player) => {
-          const net = playerNet(player, session.oneBuyIn)
-          const tone = net > 0 ? 'up' : net < 0 ? 'down' : 'even'
-          return (
-            <li key={player.id} className="player">
-              <div className="player-top">
+      <div className="ledger">
+        {session.players.length > 0 && (
+          <div className="columns" aria-hidden="true">
+            <span>Name</span>
+            <span>Buy-ins</span>
+            <span>Left</span>
+            <span>Net</span>
+            <span />
+          </div>
+        )}
+        <ul className="players">
+          {session.players.map((player) => {
+            const net = playerNet(player, session.oneBuyIn)
+            const tone = net > 0 ? 'up' : net < 0 ? 'down' : 'even'
+            return (
+              <li key={player.id} className="player">
                 <input
                   aria-label={`Name for ${player.name || 'player'}`}
                   className="name"
                   value={player.name}
                   onChange={(event) => updatePlayer(player.id, { name: event.target.value })}
                 />
-                <p className={`net ${tone}`}>{formatSigned(net)}</p>
-              </div>
-              <div className="controls">
                 <div className="stepper">
-                  <span>Buy-ins</span>
                   <button
                     type="button"
                     aria-label={`Remove a buy-in from ${player.name}`}
@@ -123,8 +128,8 @@ export function App() {
                   </button>
                 </div>
                 <label className="left">
-                  <span>Left</span>
                   <input
+                    aria-label={`Chips left for ${player.name}`}
                     inputMode="numeric"
                     min={0}
                     step={1}
@@ -133,14 +138,15 @@ export function App() {
                     onChange={(event) => setLeft(player.id, event.target.value)}
                   />
                 </label>
+                <p className={`net ${tone}`}>{formatSigned(net)}</p>
                 <button type="button" className="remove" onClick={() => removePlayer(player.id)}>
                   Remove
                 </button>
-              </div>
-            </li>
-          )
-        })}
-      </ul>
+              </li>
+            )
+          })}
+        </ul>
+      </div>
 
       <form className="add" onSubmit={addPlayer}>
         <input

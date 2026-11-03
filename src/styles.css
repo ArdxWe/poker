@@ -26,7 +26,7 @@ button {
 }
 
 .sheet {
-  width: min(100%, 32rem);
+  width: min(100%, 44rem);
   margin: 0 auto;
   padding: 2.75rem 1.25rem 4rem;
 }
@@ -48,9 +48,8 @@ h1 {
 }
 
 .unit span,
-.stepper span,
-.left span,
 .summary dt,
+.columns span,
 .remove,
 .cancel {
   color: #7a7168;
@@ -79,30 +78,59 @@ h1 {
   border-bottom-color: #1f1a17;
 }
 
+.ledger {
+  display: grid;
+  grid-template-columns: minmax(6rem, 1fr) max-content 5.75rem max-content max-content;
+  column-gap: 1.15rem;
+  align-items: center;
+  margin-top: 1.5rem;
+  overflow-x: auto;
+}
+
+.columns,
+.players,
+.player {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  align-items: center;
+}
+
+.columns {
+  padding-bottom: 0.35rem;
+}
+
+.columns span {
+  white-space: nowrap;
+}
+
+.columns span:nth-child(2) {
+  text-align: center;
+}
+
+.columns span:nth-child(3),
+.columns span:nth-child(4) {
+  text-align: right;
+}
+
 .players {
-  margin: 1.5rem 0 0;
+  margin: 0;
   padding: 0;
   list-style: none;
 }
 
 .player {
-  padding: 1.1rem 0;
+  padding: 0.7rem 0;
   border-top: 1px solid #e4dbd0;
 }
 
-.player-top,
-.controls,
 .stepper,
+.left,
 .add,
 .confirm,
 .summary div {
   display: flex;
   align-items: center;
-}
-
-.player-top {
-  justify-content: space-between;
-  gap: 1rem;
 }
 
 .name,
@@ -115,7 +143,14 @@ h1 {
 }
 
 .name {
-  flex: 1;
+  width: 100%;
+  border-bottom-color: #d4cbbf;
+  padding: 0.15rem 0;
+  cursor: text;
+}
+
+.name:hover {
+  border-bottom-color: #1f1a17;
 }
 
 .net,
@@ -126,28 +161,30 @@ h1 {
 }
 
 .net {
-  font-size: 1.7rem;
-}
-
-.controls {
-  flex-wrap: wrap;
-  gap: 0.75rem 1rem;
-  margin-top: 0.85rem;
+  font-size: 1.25rem;
+  text-align: right;
 }
 
 .stepper {
-  gap: 0.4rem;
+  justify-content: center;
+  gap: 0.35rem;
 }
 
 .stepper button,
 .add button,
 .confirm button,
 .clear {
-  min-width: 2.75rem;
-  min-height: 2.75rem;
+  min-width: 2.5rem;
+  min-height: 2.5rem;
   border: 1px solid #d4cbbf;
   border-radius: 999px;
   background: #fffcf8;
+}
+
+.stepper button {
+  min-width: 2.15rem;
+  min-height: 2.15rem;
+  padding: 0;
 }
 
 .stepper strong {
@@ -157,15 +194,12 @@ h1 {
 }
 
 .left {
-  display: flex;
-  align-items: baseline;
-  gap: 0.55rem;
-  margin-left: auto;
+  justify-content: flex-end;
 }
 
 .left input {
-  width: 5.5rem;
-  font-size: 1.25rem;
+  width: 100%;
+  font-size: 1.15rem;
 }
 
 .remove,
@@ -176,6 +210,12 @@ h1 {
   text-transform: none;
   letter-spacing: 0;
   font-size: 0.95rem;
+}
+
+.remove {
+  justify-self: end;
+  font-size: 0.85rem;
+  white-space: nowrap;
 }
 
 .add {
@@ -196,17 +236,54 @@ h1 {
 }
 
 .summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem 1.25rem;
   margin: 2rem 0 0;
 }
 
 .summary div {
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 0.45rem 0;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 0.2rem;
+  min-width: 0;
+  padding: 0;
+}
+
+.summary dt {
+  line-height: 1.15;
+  white-space: normal;
 }
 
 .summary dd {
   font-size: 1.25rem;
+}
+
+@media (max-width: 36rem) {
+  .ledger {
+    column-gap: 0.55rem;
+    grid-template-columns: minmax(4.5rem, 1fr) max-content 4.25rem max-content max-content;
+  }
+
+  .stepper button {
+    min-width: 1.85rem;
+    min-height: 1.85rem;
+  }
+
+  .net,
+  .summary dd {
+    font-size: 1.05rem;
+  }
+
+  .summary {
+    gap: 0.5rem;
+  }
+
+  .summary dt,
+  .columns span {
+    font-size: 0.68rem;
+  }
 }
 
 .up {
