@@ -113,6 +113,7 @@ export function App() {
     if (!game) return
     setClub((current) => [game, ...current])
     setGameName('')
+    setConfirmingClear(false)
     setPage('club')
     setSession((current) => ({
       ...current,
