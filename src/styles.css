@@ -1,0 +1,339 @@
+:root {
+  color: #1f1a17;
+  background: #efeae2;
+  font-family: "Avenir Next", "Segoe UI", sans-serif;
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+button,
+input {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.sheet {
+  width: min(100%, 44rem);
+  margin: 0 auto;
+  padding: 2.75rem 1.25rem 4rem;
+}
+
+h1 {
+  margin: 0;
+  font-family: Georgia, "Iowan Old Style", Palatino, serif;
+  font-size: 2.75rem;
+  font-weight: 500;
+  letter-spacing: -0.04em;
+}
+
+.unit {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.unit span,
+.summary dt,
+.columns span,
+.remove,
+.cancel {
+  color: #7a7168;
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.unit input,
+.left input {
+  width: 7rem;
+  border: none;
+  border-bottom: 1px solid #d4cbbf;
+  background: transparent;
+  font-family: Georgia, "Iowan Old Style", Palatino, serif;
+  font-size: 1.6rem;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.unit input:focus,
+.left input:focus,
+.name:focus,
+.add input:focus {
+  outline: none;
+  border-bottom-color: #1f1a17;
+}
+
+.ledger {
+  display: grid;
+  grid-template-columns: minmax(6rem, 1fr) max-content 5.75rem max-content max-content;
+  column-gap: 1.15rem;
+  align-items: center;
+  margin-top: 1.5rem;
+  overflow-x: auto;
+}
+
+.columns,
+.players,
+.player {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  align-items: center;
+}
+
+.columns {
+  padding-bottom: 0.35rem;
+}
+
+.columns span {
+  white-space: nowrap;
+}
+
+.columns span:nth-child(2) {
+  text-align: center;
+}
+
+.columns span:nth-child(3),
+.columns span:nth-child(4) {
+  text-align: right;
+}
+
+.players {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.player {
+  padding: 0.7rem 0;
+  border-top: 1px solid #e4dbd0;
+}
+
+.stepper,
+.left,
+.add,
+.confirm,
+.summary div {
+  display: flex;
+  align-items: center;
+}
+
+.name,
+.add input {
+  min-width: 0;
+  border: none;
+  border-bottom: 1px solid transparent;
+  background: transparent;
+  font-size: 1.2rem;
+}
+
+.name {
+  width: 100%;
+  border-bottom-color: #d4cbbf;
+  padding: 0.15rem 0;
+  cursor: text;
+}
+
+.name:hover {
+  border-bottom-color: #1f1a17;
+}
+
+.net,
+.summary dd {
+  margin: 0;
+  font-family: Georgia, "Iowan Old Style", Palatino, serif;
+  font-variant-numeric: tabular-nums;
+}
+
+.net {
+  font-size: 1.25rem;
+  text-align: right;
+}
+
+.stepper {
+  justify-content: center;
+  gap: 0.35rem;
+}
+
+.stepper button,
+.add button,
+.confirm button,
+.clear {
+  min-width: 2.5rem;
+  min-height: 2.5rem;
+  border: 1px solid #d4cbbf;
+  border-radius: 999px;
+  background: #fffcf8;
+}
+
+.stepper button {
+  min-width: 2.15rem;
+  min-height: 2.15rem;
+  padding: 0;
+}
+
+.stepper strong {
+  min-width: 1.5rem;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.left {
+  justify-content: flex-end;
+}
+
+.left input {
+  width: 100%;
+  font-size: 1.15rem;
+}
+
+.remove,
+.cancel {
+  border: none;
+  background: none;
+  padding: 0;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 0.95rem;
+}
+
+.remove {
+  justify-self: end;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.add {
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e4dbd0;
+}
+
+.add input {
+  flex: 1;
+  border-bottom-color: #d4cbbf;
+  padding: 0.4rem 0;
+}
+
+.add button {
+  padding: 0 1.1rem;
+}
+
+.summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem 1.25rem;
+  margin: 2rem 0 0;
+}
+
+.summary div {
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 0.2rem;
+  min-width: 0;
+  padding: 0;
+}
+
+.summary dt {
+  line-height: 1.15;
+  white-space: normal;
+}
+
+.summary dd {
+  font-size: 1.25rem;
+}
+
+@media (max-width: 36rem) {
+  .ledger {
+    column-gap: 0.55rem;
+    grid-template-columns: minmax(4.5rem, 1fr) max-content 4.25rem max-content max-content;
+  }
+
+  .stepper button {
+    min-width: 1.85rem;
+    min-height: 1.85rem;
+  }
+
+  .net,
+  .summary dd {
+    font-size: 1.05rem;
+  }
+
+  .summary {
+    gap: 0.5rem;
+  }
+
+  .summary dt,
+  .columns span {
+    font-size: 0.68rem;
+  }
+}
+
+.up {
+  color: #1d6b45;
+}
+
+.down {
+  color: #9d342c;
+}
+
+.even {
+  color: #7a7168;
+}
+
+.clear,
+.confirm {
+  margin-top: 2rem;
+}
+
+.clear {
+  width: 100%;
+  border-radius: 999px;
+}
+
+.clear:disabled {
+  cursor: default;
+  opacity: 0.4;
+}
+
+.confirm {
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.confirm p {
+  margin: 0;
+  flex: 1;
+}
+
+.confirm button {
+  padding: 0 1rem;
+}
+
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
+  margin: 0;
+  -webkit-appearance: none;
+}
+
+input[type='number'] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
