@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { formatAmount, formatSigned, playerNet, summarize, wholeNumber, type Session } from './ledger'
+import { chipsLeft, formatAmount, formatSigned, newId, playerNet, summarize, wholeNumber, type Session } from './ledger'
 import { loadSession, saveSession } from './storage'
 
 export function App() {
@@ -28,7 +28,7 @@ export function App() {
       players: [
         ...current.players,
         {
-          id: crypto.randomUUID(),
+          id: newId(),
           name,
           buyIns: 1,
           left: current.oneBuyIn,
@@ -53,7 +53,7 @@ export function App() {
   }
 
   function setLeft(id: string, raw: string) {
-    const parsed = wholeNumber(Number(raw))
+    const parsed = chipsLeft(raw)
     if (parsed === null) return
     updatePlayer(id, { left: parsed })
   }
