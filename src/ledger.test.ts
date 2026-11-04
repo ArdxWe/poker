@@ -1,6 +1,16 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { chipsLeft, formatSigned, newId, playerNet, summarize, type Player, type Session } from './ledger.ts'
+import {
+  chipsLeft,
+  formatSigned,
+  newId,
+  playerNet,
+  recordGame,
+  standings,
+  summarize,
+  type Player,
+  type Session,
+} from './ledger.ts'
 
 const alex: Player = { id: 'a', name: 'Alex', buyIns: 3, left: 450 }
 const sam: Player = { id: 's', name: 'Sam', buyIns: 1, left: 350 }
@@ -46,6 +56,46 @@ test('a player id can be made without a secure context', () => {
   } finally {
     Object.defineProperty(source, 'randomUUID', { value: randomUUID, configurable: true })
   }
+})
+
+test('one game merges the same name and skips blanks', () => {
+  const session: Session = {
+    oneBuyIn: 200,
+    players: [
+      { id: '1', name: 'Alex', buyIns: 1, left: 300 },
+      { id: '2', name: ' alex ', buyIns: 2, left: 100 },
+      { id: '3', name: '  ', buyIns: 1, left: 200 },
+    ],
+  }
+  const game = recordGame(session, '2026-11-04T06:00:00.000Z', 'g1', ' Friday ')
+  assert.deepEqual(game, {
+    id: 'g1',
+    title: 'Friday',
+    playedAt: '2026-11-04T06:00:00.000Z',
+    oneBuyIn: 200,
+    players: [{ name: 'Alex', buyIns: 3, left: 400, net: -200 }],
+  })
+})
+
+test('a table with no names is not a game', () => {
+  const session: Session = { oneBuyIn: 200, players: [{ id: '1', name: ' ', buyIns: 1, left: 200 }] }
+  assert.equal(recordGame(session, '2026-11-04T06:00:00.000Z', 'g1'), null)
+})
+
+test('standings add the same player across games', () => {
+  const first = recordGame(
+    { oneBuyIn: 100, players: [{ id: '1', name: 'Alex', buyIns: 1, left: 200 }] },
+    '2026-11-04T06:00:00.000Z',
+    'g1',
+  )
+  const second = recordGame(
+    { oneBuyIn: 100, players: [{ id: '2', name: 'alex', buyIns: 2, left: 50 }] },
+    '2026-11-04T08:00:00.000Z',
+    'g2',
+  )
+  assert.ok(first)
+  assert.ok(second)
+  assert.deepEqual(standings([first, second]), [{ name: 'Alex', net: -50 }])
 })
 
 test('signed amounts use a minus glyph', () => {
