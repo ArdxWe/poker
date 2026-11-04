@@ -54,6 +54,65 @@ export function chipsLeft(raw: string): number | null {
   return wholeNumber(Number(raw))
 }
 
+export type GamePlayer = {
+  name: string
+  buyIns: number
+  left: number
+  net: number
+}
+
+export type Game = {
+  id: string
+  title: string
+  playedAt: string
+  oneBuyIn: number
+  players: GamePlayer[]
+}
+
+export type Standing = {
+  name: string
+  net: number
+}
+
+function nameKey(name: string): string {
+  return name.trim().toLocaleLowerCase()
+}
+
+export function recordGame(session: Session, playedAt: string, id: string, title = ''): Game | null {
+  const grouped = new Map<string, GamePlayer>()
+  for (const player of session.players) {
+    const name = player.name.trim()
+    if (!name) continue
+    const key = nameKey(name)
+    const net = playerNet(player, session.oneBuyIn)
+    const existing = grouped.get(key)
+    if (existing) {
+      existing.buyIns += player.buyIns
+      existing.left += player.left
+      existing.net += net
+    } else {
+      grouped.set(key, { name, buyIns: player.buyIns, left: player.left, net })
+    }
+  }
+  if (grouped.size === 0) return null
+  return { id, title: title.trim(), playedAt, oneBuyIn: session.oneBuyIn, players: [...grouped.values()] }
+}
+
+export function standings(games: Game[]): Standing[] {
+  const totals = new Map<string, Standing>()
+  for (const game of games) {
+    for (const player of game.players) {
+      const name = player.name.trim()
+      if (!name) continue
+      const key = nameKey(name)
+      const existing = totals.get(key)
+      if (existing) existing.net += player.net
+      else totals.set(key, { name, net: player.net })
+    }
+  }
+  return [...totals.values()].sort((a, b) => b.net - a.net || a.name.localeCompare(b.name))
+}
+
 export function newId(): string {
   const source = globalThis.crypto
   if (source && typeof source.randomUUID === 'function') return source.randomUUID()
