@@ -90,6 +90,12 @@ export function App() {
     updatePlayer(id, { buyIns: next })
   }
 
+  function setBuyIns(id: string, raw: string) {
+    const parsed = chipsLeft(raw)
+    if (parsed === null) return
+    updatePlayer(id, { buyIns: parsed })
+  }
+
   function setLeft(id: string, raw: string) {
     const parsed = chipsLeft(raw)
     if (parsed === null) return
@@ -273,7 +279,15 @@ export function App() {
                   >
                     −
                   </button>
-                  <strong>{player.buyIns}</strong>
+                  <input
+                    aria-label={`Buy-ins for ${player.name}`}
+                    inputMode="numeric"
+                    min={0}
+                    step={1}
+                    type="number"
+                    value={player.buyIns}
+                    onChange={(event) => setBuyIns(player.id, event.target.value)}
+                  />
                   <button
                     type="button"
                     aria-label={`Add a buy-in for ${player.name}`}
@@ -344,7 +358,9 @@ export function App() {
         </div>
         <div>
           <dt>Off by</dt>
-          <dd className={summary.offBy === 0 ? 'even' : 'down'}>{formatSigned(summary.offBy)}</dd>
+          <dd className={summary.offBy > 0 ? 'up' : summary.offBy < 0 ? 'down' : 'even'}>
+            {formatSigned(summary.offBy)}
+          </dd>
         </div>
       </dl>
 

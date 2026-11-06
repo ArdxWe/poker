@@ -169,7 +169,8 @@ h1.home {
 .name:focus,
 .add input:focus,
 .add select:focus,
-.game-name input:focus {
+.game-name input:focus,
+.stepper input:focus {
   border-color: var(--felt);
 }
 
@@ -289,9 +290,14 @@ h1.home {
   box-shadow: none;
 }
 
-.stepper strong {
-  min-width: 1.5rem;
+.stepper input {
+  width: 2.6rem;
+  padding: 0.2rem 0.15rem;
+  border: 1.5px solid #e3d5c4;
+  border-radius: 0.55rem;
+  background: #fff;
   font-variant-numeric: tabular-nums;
+  font-size: 1rem;
   text-align: center;
 }
 
@@ -497,11 +503,11 @@ h1.home {
 }
 
 .up {
-  color: #157a45;
+  color: var(--danger);
 }
 
 .down {
-  color: var(--danger);
+  color: #157a45;
 }
 
 .even {
