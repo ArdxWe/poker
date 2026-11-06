@@ -151,7 +151,7 @@ export function App() {
               : "Texas Hold'em Poker Club"}
         </h1>
         <nav className="views">
-          <button type="button" aria-current={page === 'club' ? 'page' : undefined} onClick={showClub}>
+          <button type="button" aria-current={page === 'club' || page === 'history' ? 'page' : undefined} onClick={showClub}>
             My club
           </button>
           <button type="button" aria-current={page === 'game' ? 'page' : undefined} onClick={() => setPage('game')}>
@@ -365,7 +365,7 @@ export function App() {
         {confirmingClear ? (
           <div className="confirm">
             <p>Clear all players?</p>
-            <button type="button" onClick={clearPlayers}>
+            <button type="button" className="danger" onClick={clearPlayers}>
               Clear
             </button>
             <button type="button" className="cancel" onClick={() => setConfirmingClear(false)}>
