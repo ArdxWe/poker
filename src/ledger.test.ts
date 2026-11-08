@@ -47,6 +47,12 @@ test('an empty or partial stack does not become zero', () => {
   assert.equal(chipsLeft('1200'), 1200)
 })
 
+test('a cleared stack counts as zero until a number is typed', () => {
+  const cleared: Player = { id: 'a', name: 'Alex', buyIns: 2, left: null }
+  assert.equal(playerNet(cleared, 100), -200)
+  assert.equal(summarize({ oneBuyIn: 100, players: [cleared] }).totalLeft, 0)
+})
+
 test('a player id can be made without a secure context', () => {
   const source = globalThis.crypto
   const randomUUID = source.randomUUID
