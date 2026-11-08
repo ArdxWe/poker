@@ -52,8 +52,12 @@ function normalizePlayer(value: unknown): Player | null {
   if (!value || typeof value !== 'object') return null
   const record = value as { id?: unknown; name?: unknown; buyIns?: unknown; left?: unknown }
   const buyIns = wholeNumber(typeof record.buyIns === 'number' ? record.buyIns : -1)
-  const left = wholeNumber(typeof record.left === 'number' ? record.left : -1)
-  if (typeof record.id !== 'string' || buyIns === null || left === null) return null
+  const left =
+    record.left === null
+      ? null
+      : wholeNumber(typeof record.left === 'number' ? record.left : -1)
+  if (typeof record.id !== 'string' || buyIns === null) return null
+  if (record.left !== null && left === null) return null
   const name = typeof record.name === 'string' ? record.name : ''
   return { id: record.id, name, buyIns, left }
 }

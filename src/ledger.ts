@@ -2,7 +2,8 @@ export type Player = {
   id: string
   name: string
   buyIns: number
-  left: number
+  /** Chips left; `null` while the field is cleared for retyping. */
+  left: number | null
 }
 
 export type Session = {
@@ -18,12 +19,12 @@ export type Summary = {
 }
 
 export function playerNet(player: Player, oneBuyIn: number): number {
-  return player.left - player.buyIns * oneBuyIn
+  return (player.left ?? 0) - player.buyIns * oneBuyIn
 }
 
 export function summarize(session: Session): Summary {
   const totalBuyIns = session.players.reduce((sum, player) => sum + player.buyIns, 0)
-  const totalLeft = session.players.reduce((sum, player) => sum + player.left, 0)
+  const totalLeft = session.players.reduce((sum, player) => sum + (player.left ?? 0), 0)
   const totalIn = totalBuyIns * session.oneBuyIn
   return {
     totalBuyIns,
@@ -84,14 +85,15 @@ export function recordGame(session: Session, playedAt: string, id: string, title
     const name = player.name.trim()
     if (!name) continue
     const key = nameKey(name)
+    const left = player.left ?? 0
     const net = playerNet(player, session.oneBuyIn)
     const existing = grouped.get(key)
     if (existing) {
       existing.buyIns += player.buyIns
-      existing.left += player.left
+      existing.left += left
       existing.net += net
     } else {
-      grouped.set(key, { name, buyIns: player.buyIns, left: player.left, net })
+      grouped.set(key, { name, buyIns: player.buyIns, left, net })
     }
   }
   if (grouped.size === 0) return null
