@@ -23,6 +23,7 @@ function PlayedAt({ playedAt }: { playedAt: string }) {
   return (
     <time className="when" dateTime={playedAt}>
       <span className="when-day">{day}</span>
+      <span className="when-sep">{' '}</span>
       <span className="when-clock">{clock}</span>
     </time>
   )

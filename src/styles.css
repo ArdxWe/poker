@@ -121,16 +121,18 @@ h1.untitled {
 }
 
 .when {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 0.45rem;
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum" 1;
   letter-spacing: 0;
   white-space: nowrap;
 }
 
+.when-sep {
+  font-size: 0;
+}
+
 .when-clock {
+  margin-left: 0.45rem;
   color: #6f675f;
   font-weight: 600;
 }
