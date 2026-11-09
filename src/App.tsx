@@ -5,6 +5,7 @@ import {
   formatSigned,
   newId,
   playerNet,
+  playersByNet,
   recordGame,
   standings,
   summarize,
@@ -15,13 +16,16 @@ import {
 import { buildShareUrl, clearShareHash, decodeGameShare, readShareTokenFromLocation } from './share'
 import { loadClub, loadSession, saveClub, saveSession } from './storage'
 
-function formatPlayedAt(playedAt: string): string {
-  return new Date(playedAt).toLocaleString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  })
+function PlayedAt({ playedAt }: { playedAt: string }) {
+  const date = new Date(playedAt)
+  const day = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  const clock = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+  return (
+    <time className="when" dateTime={playedAt}>
+      <span className="when-day">{day}</span>
+      <span className="when-clock">{clock}</span>
+    </time>
+  )
 }
 
 function readSharedGame(): Game | null {
@@ -220,12 +224,14 @@ export function App() {
     <main className="sheet">
       <div className="frame">
       <header>
-        <h1 className={displayedGame ? 'dated' : 'home'}>
-          {displayedGame
-            ? displayedGame.title || formatPlayedAt(displayedGame.playedAt)
-            : page === 'game'
-              ? 'New game'
-              : "Texas Hold'em Poker Club"}
+        <h1 className={displayedGame ? (displayedGame.title ? 'dated' : 'dated untitled') : 'home'}>
+          {displayedGame ? (
+            displayedGame.title || <PlayedAt playedAt={displayedGame.playedAt} />
+          ) : page === 'game' ? (
+            'New game'
+          ) : (
+            "Texas Hold'em Poker Club"
+          )}
         </h1>
         {displayedGame ? null : page === 'game' ? (
           <button type="button" className="nav-link" onClick={showClub}>
@@ -254,7 +260,7 @@ export function App() {
           </div>
           {displayedGame.title ? (
             <p className="played-at">
-              <time dateTime={displayedGame.playedAt}>{formatPlayedAt(displayedGame.playedAt)}</time>
+              <PlayedAt playedAt={displayedGame.playedAt} />
             </p>
           ) : null}
           <p className="unit">
@@ -268,7 +274,7 @@ export function App() {
             <span>Net</span>
           </div>
           <ul className="hand">
-            {displayedGame.players.map((player) => {
+            {playersByNet(displayedGame.players).map((player) => {
               const tone = player.net > 0 ? 'up' : player.net < 0 ? 'down' : 'even'
               return (
                 <li key={player.name.toLocaleLowerCase()}>
@@ -310,7 +316,7 @@ export function App() {
                   <li key={game.id}>
                     <button type="button" className="open-game" onClick={() => openGameDetail(game.id)}>
                       {game.title ? <span className="game-title">{game.title}</span> : null}
-                      <time dateTime={game.playedAt}>{formatPlayedAt(game.playedAt)}</time>
+                      <PlayedAt playedAt={game.playedAt} />
                     </button>
                     <span>
                       {game.players.length} {game.players.length === 1 ? 'player' : 'players'}

@@ -5,6 +5,7 @@ import {
   formatSigned,
   newId,
   playerNet,
+  playersByNet,
   recordGame,
   standings,
   summarize,
@@ -102,6 +103,18 @@ test('standings add the same player across games', () => {
   assert.ok(first)
   assert.ok(second)
   assert.deepEqual(standings([first, second]), [{ name: 'Alex', net: -50 }])
+})
+
+test('a saved game lists the biggest winner first', () => {
+  assert.deepEqual(
+    playersByNet([
+      { name: 'Sam', net: -50 },
+      { name: 'Alex', net: 200 },
+      { name: 'Bea', net: 200 },
+      { name: 'Rio', net: 0 },
+    ]).map((player) => player.name),
+    ['Alex', 'Bea', 'Rio', 'Sam'],
+  )
 })
 
 test('signed amounts use a minus glyph', () => {
