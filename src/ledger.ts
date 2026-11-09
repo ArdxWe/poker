@@ -115,6 +115,10 @@ export function standings(games: Game[]): Standing[] {
   return [...totals.values()].sort((a, b) => b.net - a.net || a.name.localeCompare(b.name))
 }
 
+export function playersByNet<T extends { name: string; net: number }>(players: readonly T[]): T[] {
+  return [...players].sort((a, b) => b.net - a.net || a.name.localeCompare(b.name))
+}
+
 export function newId(): string {
   const source = globalThis.crypto
   if (source && typeof source.randomUUID === 'function') return source.randomUUID()

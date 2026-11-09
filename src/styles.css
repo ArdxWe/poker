@@ -116,6 +116,39 @@ h1.home {
   font-size: clamp(1.55rem, 5.2vw, 2.05rem);
 }
 
+h1.untitled {
+  letter-spacing: 0;
+}
+
+.when {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+
+.when-sep {
+  font-size: 0;
+}
+
+.when-clock {
+  margin-left: 0.45rem;
+  color: #6f675f;
+  font-weight: 600;
+}
+
+h1 .when {
+  font-family: "Avenir Next", "Segoe UI", sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+h1 .when-clock {
+  font-size: 0.58em;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+
 .new-game,
 .nav-link {
   flex-shrink: 0;
@@ -770,7 +803,7 @@ h1.home {
 }
 
 .club h2:not(:first-child) {
-  margin-top: 2.5rem;
+  margin-top: 4rem;
 }
 
 .standings,
@@ -820,10 +853,14 @@ h1.home {
   color: #fff;
 }
 
-.standings li span:last-child,
-.games time {
+.standings li span:last-child {
   font-family: Georgia, "Iowan Old Style", Palatino, serif;
   font-variant-numeric: tabular-nums;
+}
+
+.open-game:not(:has(.game-title)) .when-day {
+  color: var(--ink);
+  font-weight: 700;
 }
 
 .games li {
