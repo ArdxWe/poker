@@ -86,7 +86,7 @@ export function App() {
         ...current,
         players: [
           ...current.players,
-          { id: newId(), name: trimmed, buyIns: 1, left: current.oneBuyIn },
+          { id: newId(), name: trimmed, buyIns: 1, left: 0 },
         ],
       }
     })
