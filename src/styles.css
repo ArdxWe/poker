@@ -503,6 +503,7 @@ h1.home {
   .ledger {
     display: flex;
     flex-direction: column;
+    align-items: stretch;
     gap: 0.55rem;
     overflow: visible;
   }
@@ -514,6 +515,7 @@ h1.home {
   .players {
     display: flex;
     flex-direction: column;
+    align-items: stretch;
     gap: 0.55rem;
   }
 
