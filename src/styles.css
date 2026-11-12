@@ -108,6 +108,7 @@ header {
   justify-content: space-between;
   gap: 1rem 1.25rem;
   width: 100%;
+  min-height: 2.75rem;
 }
 
 h1 {
@@ -163,7 +164,7 @@ h1 .when-clock {
 .nav-link {
   flex-shrink: 0;
   min-height: 2.55rem;
-  margin-top: 0.12rem;
+  margin-top: 0;
   padding: 0 1.15rem;
 }
 
@@ -249,10 +250,11 @@ h1 .when-clock {
   border-radius: 1rem;
 }
 
-.unit span,
+.unit span:not(.unit-end),
 .summary dt,
 .columns span,
-.hand-columns span {
+.hand-columns span,
+.standings-head span {
   color: var(--muted);
   font-size: 0.78rem;
   font-weight: 600;
@@ -704,10 +706,19 @@ h1 .when-clock {
 
   header {
     gap: 0.65rem;
+    /* Two lines of the club title, so a one-line game date keeps the same height. */
+    min-height: calc(1.35rem * 1.15 * 2);
   }
 
   h1.home {
     font-size: 1.35rem;
+  }
+
+  h1.dated,
+  h1.untitled {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }
 
@@ -882,6 +893,18 @@ h1 .when-clock {
   box-shadow: none;
 }
 
+.history .unit .share {
+  min-height: 2.35rem;
+  padding: 0 0.9rem;
+  flex-shrink: 0;
+}
+
+.unit-end {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
 .share-note {
   margin: 0;
   color: var(--muted);
@@ -925,8 +948,32 @@ h1 .when-clock {
   border-radius: 0.95rem;
 }
 
+.standings-head,
 .standings li {
-  grid-template-columns: auto 1fr auto;
+  display: grid;
+  grid-template-columns: 1.7rem minmax(0, 1fr) 4.25rem 5.75rem;
+  column-gap: 0.75rem;
+  align-items: center;
+}
+
+.standings-head {
+  padding: 0.15rem 0.8rem 0.2rem;
+}
+
+.standings-head span:nth-child(3) {
+  text-align: center;
+}
+
+.standings-head span:nth-child(4) {
+  text-align: right;
+}
+
+.standings li {
+  margin-top: 0.45rem;
+  padding: 0.7rem 0.8rem;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 0.95rem;
 }
 
 .standings li::before {
@@ -949,7 +996,23 @@ h1 .when-clock {
   color: #fff;
 }
 
-.standings li span:last-child {
+.standing-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.games-played {
+  justify-self: center;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  text-align: center;
+}
+
+.standings li > span:last-child {
+  justify-self: end;
   font-family: Georgia, "Iowan Old Style", Palatino, serif;
   font-variant-numeric: tabular-nums;
 }
@@ -1045,17 +1108,10 @@ h1 .when-clock {
   text-align: right;
 }
 
-.history .played-at {
-  margin-top: 0.85rem;
-}
-
-.history .history-bar + .unit,
-.history .played-at + .unit {
-  margin-top: 1rem;
-}
-
+.history .played-at,
+.history .share-note,
 .history .unit {
-  margin-top: 1rem;
+  margin-top: 0;
 }
 
 .history .unit strong,
@@ -1169,5 +1225,11 @@ input[type='number'] {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  .standings-head,
+  .standings li {
+    grid-template-columns: 1.7rem minmax(0, 1fr) 2.8rem 4.8rem;
+    column-gap: 0.45rem;
   }
 }
