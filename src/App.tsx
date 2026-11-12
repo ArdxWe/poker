@@ -276,25 +276,27 @@ export function App() {
               ) : null}
             </span>
           </div>
-          <div className="hand-columns" aria-hidden="true">
-            <span>Name</span>
-            <span>Buy-ins</span>
-            <span>Left</span>
-            <span>Net</span>
+          <div className="board">
+            <div className="hand-columns" aria-hidden="true">
+              <span>Name</span>
+              <span>Buy-ins</span>
+              <span>Left</span>
+              <span>Net</span>
+            </div>
+            <ul className="hand">
+              {playersByNet(displayedGame.players).map((player) => {
+                const tone = player.net > 0 ? 'up' : player.net < 0 ? 'down' : 'even'
+                return (
+                  <li key={player.name.toLocaleLowerCase()}>
+                    <span>{player.name}</span>
+                    <span>{player.buyIns}</span>
+                    <span>{formatAmount(player.left)}</span>
+                    <span className={tone}>{formatSigned(player.net)}</span>
+                  </li>
+                )
+              })}
+            </ul>
           </div>
-          <ul className="hand">
-            {playersByNet(displayedGame.players).map((player) => {
-              const tone = player.net > 0 ? 'up' : player.net < 0 ? 'down' : 'even'
-              return (
-                <li key={player.name.toLocaleLowerCase()}>
-                  <span>{player.name}</span>
-                  <span>{player.buyIns}</span>
-                  <span>{formatAmount(player.left)}</span>
-                  <span className={tone}>{formatSigned(player.net)}</span>
-                </li>
-              )
-            })}
-          </ul>
         </section>
       ) : page === 'club' ? (
         <section className="club">
@@ -307,27 +309,28 @@ export function App() {
             </div>
           ) : (
             <>
-              <h2>Ranking</h2>
-              <div className="standings-head" aria-hidden="true">
-                <span />
-                <span>Name</span>
-                <span>Games</span>
-                <span>Net</span>
+              <div className="board">
+                <div className="standings-head">
+                  <h2>Ranking</h2>
+                  <span>Games</span>
+                  <span>Net</span>
+                </div>
+                <ol className="standings">
+                  {ranks.map((row) => {
+                    const tone = row.net > 0 ? 'up' : row.net < 0 ? 'down' : 'even'
+                    return (
+                      <li key={row.name.toLocaleLowerCase()}>
+                        <span className="standing-name">{row.name}</span>
+                        <span className="games-played">{row.games}</span>
+                        <span className={tone}>{formatSigned(row.net)}</span>
+                      </li>
+                    )
+                  })}
+                </ol>
               </div>
-              <ol className="standings">
-                {ranks.map((row) => {
-                  const tone = row.net > 0 ? 'up' : row.net < 0 ? 'down' : 'even'
-                  return (
-                    <li key={row.name.toLocaleLowerCase()}>
-                      <span className="standing-name">{row.name}</span>
-                      <span className="games-played">{row.games}</span>
-                      <span className={tone}>{formatSigned(row.net)}</span>
-                    </li>
-                  )
-                })}
-              </ol>
-              <h2>Game history</h2>
-              <ul className="games">
+              <div className="board">
+                <h2 className="board-title">Game history</h2>
+                <ul className="games">
                 {club.map((game) => (
                   <li key={game.id}>
                     <button type="button" className="open-game" onClick={() => openGameDetail(game.id)}>
@@ -342,7 +345,8 @@ export function App() {
                     </button>
                   </li>
                 ))}
-              </ul>
+                </ul>
+              </div>
             </>
           )}
         </section>
