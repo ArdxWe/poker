@@ -92,7 +92,7 @@ export function App() {
         ...current,
         players: [
           ...current.players,
-          { id: newId(), name: trimmed, buyIns: 1, left: 0 },
+          { id: newId(), name: trimmed, buyIns: 1, left: null },
         ],
       }
     })
@@ -377,7 +377,7 @@ export function App() {
             <ul className="players">
               {session.players.map((player) => {
                 const net = playerNet(player, session.oneBuyIn)
-                const tone = net > 0 ? 'up' : net < 0 ? 'down' : 'even'
+                const tone = net === null ? 'even' : net > 0 ? 'up' : net < 0 ? 'down' : 'even'
                 return (
                   <li key={player.id} className="player">
                     <input
@@ -422,7 +422,7 @@ export function App() {
                         onChange={(event) => setLeft(player.id, event.target.value)}
                       />
                     </label>
-                    <p className={`net ${tone}`}>{formatSigned(net)}</p>
+                    <p className={`net ${tone}`}>{net === null ? '—' : formatSigned(net)}</p>
                     <button type="button" className="remove" onClick={() => removePlayer(player.id)}>
                       Remove
                     </button>

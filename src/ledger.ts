@@ -2,7 +2,7 @@ export type Player = {
   id: string
   name: string
   buyIns: number
-  /** Chips left; `null` while the field is cleared for retyping. */
+  /** Chips left. `null` is not counted yet: no net, and omitted from the result. */
   left: number | null
 }
 
@@ -18,19 +18,27 @@ export type Summary = {
   offBy: number
 }
 
-export function playerNet(player: Player, oneBuyIn: number): number {
-  return (player.left ?? 0) - player.buyIns * oneBuyIn
+export function playerNet(player: Player, oneBuyIn: number): number | null {
+  if (player.left === null) return null
+  return player.left - player.buyIns * oneBuyIn
 }
 
 export function summarize(session: Session): Summary {
   const totalBuyIns = session.players.reduce((sum, player) => sum + player.buyIns, 0)
-  const totalLeft = session.players.reduce((sum, player) => sum + (player.left ?? 0), 0)
   const totalIn = totalBuyIns * session.oneBuyIn
+  const totalLeft = session.players.reduce((sum, player) => {
+    if (player.left === null) return sum
+    return sum + player.left
+  }, 0)
+  const settledIn = session.players.reduce((sum, player) => {
+    if (player.left === null) return sum
+    return sum + player.buyIns * session.oneBuyIn
+  }, 0)
   return {
     totalBuyIns,
     totalIn,
     totalLeft,
-    offBy: totalLeft - totalIn,
+    offBy: totalLeft - settledIn,
   }
 }
 
@@ -84,17 +92,16 @@ export function recordGame(session: Session, playedAt: string, id: string, title
   const grouped = new Map<string, GamePlayer>()
   for (const player of session.players) {
     const name = player.name.trim()
-    if (!name) continue
-    const key = nameKey(name)
-    const left = player.left ?? 0
     const net = playerNet(player, session.oneBuyIn)
+    if (!name || net === null || player.left === null) continue
+    const key = nameKey(name)
     const existing = grouped.get(key)
     if (existing) {
       existing.buyIns += player.buyIns
-      existing.left += left
+      existing.left += player.left
       existing.net += net
     } else {
-      grouped.set(key, { name, buyIns: player.buyIns, left, net })
+      grouped.set(key, { name, buyIns: player.buyIns, left: player.left, net })
     }
   }
   if (grouped.size === 0) return null

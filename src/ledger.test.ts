@@ -48,10 +48,61 @@ test('an empty or partial stack does not become zero', () => {
   assert.equal(chipsLeft('1200'), 1200)
 })
 
-test('a cleared stack counts as zero until a number is typed', () => {
-  const cleared: Player = { id: 'a', name: 'Alex', buyIns: 2, left: null }
-  assert.equal(playerNet(cleared, 100), -200)
-  assert.equal(summarize({ oneBuyIn: 100, players: [cleared] }).totalLeft, 0)
+test('an empty left is not a net', () => {
+  const open: Player = { id: 'a', name: 'Alex', buyIns: 2, left: null }
+  assert.equal(playerNet(open, 100), null)
+  assert.equal(playerNet({ ...open, left: 0 }, 100), -200)
+})
+
+test('an empty left is left out of the table result', () => {
+  const open: Player = { id: 'a', name: 'Alex', buyIns: 2, left: null }
+  const counted: Player = { id: 's', name: 'Sam', buyIns: 1, left: 350 }
+  assert.deepEqual(summarize({ oneBuyIn: 200, players: [open, counted] }), {
+    totalBuyIns: 3,
+    totalIn: 600,
+    totalLeft: 350,
+    offBy: 150,
+  })
+})
+
+test('empty stacks do not count as a loss', () => {
+  const session: Session = {
+    oneBuyIn: 200,
+    players: [
+      { id: 'a', name: 'Alex', buyIns: 1, left: null },
+      { id: 's', name: 'Sam', buyIns: 1, left: null },
+    ],
+  }
+  assert.deepEqual(summarize(session), {
+    totalBuyIns: 2,
+    totalIn: 400,
+    totalLeft: 0,
+    offBy: 0,
+  })
+})
+
+test('saving skips a player whose left is empty', () => {
+  const session: Session = {
+    oneBuyIn: 200,
+    players: [
+      { id: '1', name: 'Alex', buyIns: 2, left: null },
+      { id: '2', name: 'Sam', buyIns: 1, left: 500 },
+      { id: '3', name: 'alex', buyIns: 1, left: null },
+    ],
+  }
+  const game = recordGame(session, '2026-11-04T06:00:00.000Z', 'g1')
+  assert.deepEqual(game, {
+    id: 'g1',
+    title: '',
+    playedAt: '2026-11-04T06:00:00.000Z',
+    oneBuyIn: 200,
+    players: [{ name: 'Sam', buyIns: 1, left: 500, net: 300 }],
+  })
+})
+
+test('names with an empty left are not a game', () => {
+  const session: Session = { oneBuyIn: 200, players: [{ id: '1', name: 'Alex', buyIns: 1, left: null }] }
+  assert.equal(recordGame(session, '2026-11-04T06:00:00.000Z', 'g1'), null)
 })
 
 test('a player id can be made without a secure context', () => {
