@@ -73,7 +73,7 @@ export function App() {
   const roster = ranks.map((row) => row.name)
   const seated = new Set(session.players.map((player) => player.name.trim().toLocaleLowerCase()))
   const availableNames = roster.filter((name) => !seated.has(name.toLocaleLowerCase()))
-  const canRecord = session.players.some((player) => player.name.trim())
+  const canRecord = session.players.some((player) => player.name.trim() && player.left !== null)
   const openGame = club.find((game) => game.id === openGameId) ?? null
 
   function setOneBuyIn(raw: string) {
@@ -495,7 +495,7 @@ export function App() {
                   value={gameName}
                   onChange={(event) => setGameName(event.target.value)}
                 />
-                <button type="submit" className="record">
+                <button type="submit" className="record" disabled={!canRecord}>
                   Save
                 </button>
                 <button type="button" className="cancel" onClick={cancelSave}>
