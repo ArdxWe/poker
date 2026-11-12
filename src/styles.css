@@ -93,6 +93,22 @@ button:disabled {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 
+@media (min-width: 52rem) {
+  #root {
+    padding: 1.75rem 1.5rem;
+  }
+
+  .sheet {
+    width: min(48rem, 100%);
+    min-height: calc(100dvh - 3.5rem);
+    margin: 0 auto;
+    border-radius: 1.4rem;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.7),
+      0 22px 50px rgba(4, 20, 12, 0.32);
+  }
+}
+
 .frame {
   width: min(100%, 44rem);
   margin: 0 auto;
@@ -672,7 +688,7 @@ h1 .when-clock {
 
   .games li > span {
     grid-column: 1;
-    padding-left: 0.55rem;
+    padding-left: 0.15rem;
   }
 
   .games li .remove {
@@ -921,8 +937,15 @@ h1 .when-clock {
   text-transform: uppercase;
 }
 
-.club h2:not(:first-child) {
-  margin-top: 4rem;
+.club > h2:not(:first-child) {
+  margin-top: 1.6rem;
+}
+
+.board {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  overflow: hidden;
 }
 
 .standings,
@@ -941,39 +964,50 @@ h1 .when-clock {
   display: grid;
   align-items: center;
   gap: 0.75rem;
-  margin-top: 0.45rem;
-  padding: 0.7rem 0.8rem;
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: 0.95rem;
+  margin: 0;
+  padding: 0.78rem 0.95rem;
+  background: transparent;
 }
 
-.standings-head,
+.standings li + li,
+.games li + li {
+  border-top: 1px solid var(--line);
+}
+
+.standings-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 4.25rem 5.75rem;
+  column-gap: 0.75rem;
+  align-items: baseline;
+  padding: 0.8rem 0.95rem 0.65rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.board-title,
+.standings-head h2 {
+  margin: 0;
+}
+
+.board-title {
+  padding: 0.8rem 0.95rem 0.65rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.standings-head span:first-of-type {
+  text-align: center;
+}
+
+.standings-head span:last-child {
+  text-align: right;
+}
+
 .standings li {
   display: grid;
   grid-template-columns: 1.7rem minmax(0, 1fr) 4.25rem 5.75rem;
   column-gap: 0.75rem;
   align-items: center;
-}
-
-.standings-head {
-  padding: 0.15rem 0.8rem 0.2rem;
-}
-
-.standings-head span:nth-child(3) {
-  text-align: center;
-}
-
-.standings-head span:nth-child(4) {
-  text-align: right;
-}
-
-.standings li {
-  margin-top: 0.45rem;
-  padding: 0.7rem 0.8rem;
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: 0.95rem;
+  padding-right: 0.95rem;
+  padding-left: 0.95rem;
 }
 
 .standings li::before {
@@ -1005,7 +1039,7 @@ h1 .when-clock {
 
 .games-played {
   justify-self: center;
-  color: var(--ink);
+  color: var(--muted);
   font-variant-numeric: tabular-nums;
   font-weight: 600;
   text-align: center;
@@ -1022,8 +1056,12 @@ h1 .when-clock {
   font-weight: 700;
 }
 
+.games {
+  background: transparent;
+}
+
 .games li {
-  grid-template-columns: 1fr auto auto;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   color: var(--muted);
   font-size: 0.95rem;
 }
@@ -1033,43 +1071,24 @@ h1 .when-clock {
   flex-direction: column;
   align-items: flex-start;
   gap: 0.12rem;
-  position: relative;
   width: 100%;
-  padding: 0.35rem 1.35rem 0.35rem 0.65rem;
-  border: 1.5px solid #e4d5c2;
-  border-radius: 0.75rem;
-  background: #f7f2ea;
-  box-shadow: 0 1px 0 #eadfD1;
+  padding: 0.15rem;
+  border: 0;
+  border-radius: 0.65rem;
+  background: transparent;
+  box-shadow: none;
   text-align: left;
   color: inherit;
   font-weight: 600;
 }
 
-.open-game::after {
-  content: "›";
-  position: absolute;
-  right: 0.6rem;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--felt);
-  font-size: 1.35rem;
-  font-weight: 500;
-  line-height: 1;
-}
-
 .open-game:hover,
 .open-game:focus-visible {
-  background: #fff;
-  border-color: #b7d2c4;
+  background: #f7f2ea;
 }
 
 .open-game:active {
   transform: translateY(1px);
-  box-shadow: none;
-}
-
-.open-game:active::after {
-  transform: translateY(calc(-50% + 1px));
 }
 
 .game-title {
@@ -1134,8 +1153,8 @@ h1 .when-clock {
 }
 
 .hand-columns {
-  margin-top: 1.25rem;
-  padding: 0 0.85rem;
+  margin: 0;
+  padding: 0.7rem 0.95rem 0.15rem;
 }
 
 .hand-columns span:not(:first-child),
@@ -1150,11 +1169,12 @@ h1 .when-clock {
 }
 
 .hand li {
-  margin-top: 0.4rem;
-  padding: 0.7rem 0.85rem;
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: 0.85rem;
+  margin: 0;
+  padding: 0.72rem 0.95rem;
+}
+
+.hand li + li {
+  border-top: 1px solid var(--line);
 }
 
 .confirm {
@@ -1206,13 +1226,15 @@ input[type='number'] {
     gap: 0.4rem;
   }
 
-  .hand-columns {
-    padding-right: 0.65rem;
-    padding-left: 0.65rem;
+  .hand-columns,
+  .hand li {
+    padding-right: 0.75rem;
+    padding-left: 0.75rem;
   }
 
   .hand li {
-    padding: 0.65rem;
+    padding-top: 0.65rem;
+    padding-bottom: 0.65rem;
   }
 
   .hand-columns span,
@@ -1227,9 +1249,17 @@ input[type='number'] {
     white-space: nowrap;
   }
 
-  .standings-head,
-  .standings li {
-    grid-template-columns: 1.7rem minmax(0, 1fr) 2.8rem 4.8rem;
+  .standings-head {
+    grid-template-columns: minmax(0, 1fr) 3.4rem 4.8rem;
     column-gap: 0.45rem;
+    padding-right: 0.75rem;
+    padding-left: 0.75rem;
+  }
+
+  .standings li {
+    grid-template-columns: 1.7rem minmax(0, 1fr) 3.4rem 4.8rem;
+    column-gap: 0.45rem;
+    padding-right: 0.75rem;
+    padding-left: 0.75rem;
   }
 }
