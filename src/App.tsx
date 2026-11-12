@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type FormEvent } from 'react'
 import {
   chipsLeft,
   formatAmount,
@@ -45,6 +45,7 @@ export function App() {
   const [gameName, setGameName] = useState('')
   const [namingGame, setNamingGame] = useState(false)
   const [confirmingClear, setConfirmingClear] = useState(false)
+  const clubScroll = useRef(0)
 
   useEffect(() => {
     saveSession(session)
@@ -61,6 +62,11 @@ export function App() {
     window.addEventListener('hashchange', onHashChange)
     return () => window.removeEventListener('hashchange', onHashChange)
   }, [])
+
+  useLayoutEffect(() => {
+    const showingGame = sharedGame !== null || (page === 'club' && openGameId !== null)
+    window.scrollTo(0, showingGame || page === 'game' ? 0 : clubScroll.current)
+  }, [page, openGameId, sharedGame])
 
   const summary = summarize(session)
   const ranks = standings(club)
@@ -183,6 +189,7 @@ export function App() {
   }
 
   function showNewGame() {
+    clubScroll.current = 0
     setSharedGame(null)
     clearShareHash()
     setShareFlash('')
@@ -191,6 +198,7 @@ export function App() {
   }
 
   function openGameDetail(id: string) {
+    clubScroll.current = window.scrollY
     setSharedGame(null)
     clearShareHash()
     setShareFlash('')
@@ -234,7 +242,11 @@ export function App() {
             "Texas Hold'em Poker Club"
           )}
         </h1>
-        {displayedGame ? null : page === 'game' ? (
+        {displayedGame ? (
+          <button type="button" className="nav-link" onClick={isSharedView ? closeSharedGame : showClub}>
+            {isSharedView ? '← Open app' : '← My club'}
+          </button>
+        ) : page === 'game' ? (
           <button type="button" className="nav-link" onClick={showClub}>
             My club
           </button>
@@ -247,27 +259,23 @@ export function App() {
 
       {displayedGame ? (
         <section className="history">
-          <div className="history-bar">
-            <button type="button" className="back" onClick={isSharedView ? closeSharedGame : showClub}>
-              {isSharedView ? '← Open app' : '← My club'}
-            </button>
-            {!isSharedView ? (
-              <button type="button" className="share" onClick={shareOpenGame}>
-                {shareFlash || 'Share link'}
-              </button>
-            ) : (
-              <p className="share-note">Shared game · read only</p>
-            )}
-          </div>
+          {isSharedView ? <p className="share-note">Shared game · read only</p> : null}
           {displayedGame.title ? (
             <p className="played-at">
               <PlayedAt playedAt={displayedGame.playedAt} />
             </p>
           ) : null}
-          <p className="unit">
+          <div className="unit">
             <span>One buy-in</span>
-            <strong>{formatAmount(displayedGame.oneBuyIn)}</strong>
-          </p>
+            <span className="unit-end">
+              <strong>{formatAmount(displayedGame.oneBuyIn)}</strong>
+              {!isSharedView ? (
+                <button type="button" className="share" onClick={shareOpenGame}>
+                  {shareFlash || 'Share'}
+                </button>
+              ) : null}
+            </span>
+          </div>
           <div className="hand-columns" aria-hidden="true">
             <span>Name</span>
             <span>Buy-ins</span>
@@ -300,12 +308,19 @@ export function App() {
           ) : (
             <>
               <h2>Ranking</h2>
+              <div className="standings-head" aria-hidden="true">
+                <span />
+                <span>Name</span>
+                <span>Games</span>
+                <span>Net</span>
+              </div>
               <ol className="standings">
                 {ranks.map((row) => {
                   const tone = row.net > 0 ? 'up' : row.net < 0 ? 'down' : 'even'
                   return (
                     <li key={row.name.toLocaleLowerCase()}>
-                      <span>{row.name}</span>
+                      <span className="standing-name">{row.name}</span>
+                      <span className="games-played">{row.games}</span>
                       <span className={tone}>{formatSigned(row.net)}</span>
                     </li>
                   )

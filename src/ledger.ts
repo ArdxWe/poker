@@ -73,6 +73,7 @@ export type Game = {
 export type Standing = {
   name: string
   net: number
+  games: number
 }
 
 function nameKey(name: string): string {
@@ -103,13 +104,19 @@ export function recordGame(session: Session, playedAt: string, id: string, title
 export function standings(games: Game[]): Standing[] {
   const totals = new Map<string, Standing>()
   for (const game of games) {
+    const seen = new Set<string>()
     for (const player of game.players) {
       const name = player.name.trim()
       if (!name) continue
       const key = nameKey(name)
       const existing = totals.get(key)
       if (existing) existing.net += player.net
-      else totals.set(key, { name, net: player.net })
+      else totals.set(key, { name, net: player.net, games: 0 })
+      if (!seen.has(key)) {
+        seen.add(key)
+        const row = totals.get(key)
+        if (row) row.games += 1
+      }
     }
   }
   return [...totals.values()].sort((a, b) => b.net - a.net || a.name.localeCompare(b.name))

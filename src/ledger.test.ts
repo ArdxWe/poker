@@ -102,7 +102,7 @@ test('standings add the same player across games', () => {
   )
   assert.ok(first)
   assert.ok(second)
-  assert.deepEqual(standings([first, second]), [{ name: 'Alex', net: -50 }])
+  assert.deepEqual(standings([first, second]), [{ name: 'Alex', net: -50, games: 2 }])
 })
 
 test('a saved game lists the biggest winner first', () => {
