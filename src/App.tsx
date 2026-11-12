@@ -73,7 +73,7 @@ export function App() {
   const roster = ranks.map((row) => row.name)
   const seated = new Set(session.players.map((player) => player.name.trim().toLocaleLowerCase()))
   const availableNames = roster.filter((name) => !seated.has(name.toLocaleLowerCase()))
-  const canRecord = session.players.some((player) => player.name.trim())
+  const canRecord = session.players.some((player) => player.name.trim() && player.left !== null)
   const openGame = club.find((game) => game.id === openGameId) ?? null
 
   function setOneBuyIn(raw: string) {
@@ -92,7 +92,7 @@ export function App() {
         ...current,
         players: [
           ...current.players,
-          { id: newId(), name: trimmed, buyIns: 1, left: 0 },
+          { id: newId(), name: trimmed, buyIns: 1, left: null },
         ],
       }
     })
@@ -377,7 +377,7 @@ export function App() {
             <ul className="players">
               {session.players.map((player) => {
                 const net = playerNet(player, session.oneBuyIn)
-                const tone = net > 0 ? 'up' : net < 0 ? 'down' : 'even'
+                const tone = net === null ? 'even' : net > 0 ? 'up' : net < 0 ? 'down' : 'even'
                 return (
                   <li key={player.id} className="player">
                     <input
@@ -422,7 +422,7 @@ export function App() {
                         onChange={(event) => setLeft(player.id, event.target.value)}
                       />
                     </label>
-                    <p className={`net ${tone}`}>{formatSigned(net)}</p>
+                    <p className={`net ${tone}`}>{net === null ? '—' : formatSigned(net)}</p>
                     <button type="button" className="remove" onClick={() => removePlayer(player.id)}>
                       Remove
                     </button>
@@ -495,7 +495,7 @@ export function App() {
                   value={gameName}
                   onChange={(event) => setGameName(event.target.value)}
                 />
-                <button type="submit" className="record">
+                <button type="submit" className="record" disabled={!canRecord}>
                   Save
                 </button>
                 <button type="button" className="cancel" onClick={cancelSave}>
