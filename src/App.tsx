@@ -13,7 +13,15 @@ import {
   type Game,
   type Session,
 } from './ledger'
-import { buildShareUrl, clearShareHash, decodeGameShare, readShareTokenFromLocation } from './share'
+import {
+  buildClubShareUrl,
+  buildShareUrl,
+  clearShareHash,
+  decodeClubShare,
+  decodeGameShare,
+  readClubTokenFromLocation,
+  readShareTokenFromLocation,
+} from './share'
 import { loadClub, loadSession, saveClub, saveSession } from './storage'
 
 function PlayedAt({ playedAt }: { playedAt: string }) {
@@ -34,10 +42,18 @@ function readSharedGame(): Game | null {
   return token ? decodeGameShare(token) : null
 }
 
+function readSharedClub(): Game[] | null {
+  const token = readClubTokenFromLocation()
+  return token ? decodeClubShare(token) : null
+}
+
 export function App() {
   const [page, setPage] = useState<'club' | 'game'>('club')
   const [openGameId, setOpenGameId] = useState<string | null>(null)
   const [sharedGame, setSharedGame] = useState<Game | null>(readSharedGame)
+  const [sharedClub, setSharedClub] = useState<Game[] | null>(readSharedClub)
+  const [openSharedGameId, setOpenSharedGameId] = useState<string | null>(null)
+  const [confirmingGameId, setConfirmingGameId] = useState<string | null>(null)
   const [shareFlash, setShareFlash] = useState('')
   const [session, setSession] = useState<Session>(loadSession)
   const [club, setClub] = useState<Game[]>(loadClub)
@@ -58,23 +74,28 @@ export function App() {
   useEffect(() => {
     function onHashChange() {
       setSharedGame(readSharedGame())
+      setSharedClub(readSharedClub())
+      setOpenSharedGameId(null)
     }
     window.addEventListener('hashchange', onHashChange)
     return () => window.removeEventListener('hashchange', onHashChange)
   }, [])
 
   useLayoutEffect(() => {
-    const showingGame = sharedGame !== null || (page === 'club' && openGameId !== null)
+    const showingGame =
+      sharedGame !== null || openSharedGameId !== null || (sharedClub === null && page === 'club' && openGameId !== null)
     window.scrollTo(0, showingGame || page === 'game' ? 0 : clubScroll.current)
-  }, [page, openGameId, sharedGame])
+  }, [page, openGameId, sharedGame, sharedClub, openSharedGameId])
 
   const summary = summarize(session)
-  const ranks = standings(club)
-  const roster = ranks.map((row) => row.name)
+  const openGame = club.find((game) => game.id === openGameId) ?? null
+  const sharedClubGame = sharedClub?.find((game) => game.id === openSharedGameId) ?? null
+  const shownClub = sharedClub ?? club
+  const ranks = standings(shownClub)
+  const roster = standings(club).map((row) => row.name)
   const seated = new Set(session.players.map((player) => player.name.trim().toLocaleLowerCase()))
   const availableNames = roster.filter((name) => !seated.has(name.toLocaleLowerCase()))
   const canRecord = session.players.some((player) => player.name.trim() && player.left !== null)
-  const openGame = club.find((game) => game.id === openGameId) ?? null
 
   function setOneBuyIn(raw: string) {
     const parsed = wholeNumber(Number(raw))
@@ -177,11 +198,14 @@ export function App() {
 
   function removeGame(id: string) {
     setClub((current) => current.filter((game) => game.id !== id))
+    setConfirmingGameId(null)
     if (openGameId === id) setOpenGameId(null)
   }
 
   function showClub() {
     setSharedGame(null)
+    setSharedClub(null)
+    setOpenSharedGameId(null)
     clearShareHash()
     setShareFlash('')
     setOpenGameId(null)
@@ -191,6 +215,8 @@ export function App() {
   function showNewGame() {
     clubScroll.current = 0
     setSharedGame(null)
+    setSharedClub(null)
+    setOpenSharedGameId(null)
     clearShareHash()
     setShareFlash('')
     setOpenGameId(null)
@@ -199,6 +225,11 @@ export function App() {
 
   function openGameDetail(id: string) {
     clubScroll.current = window.scrollY
+    setConfirmingGameId(null)
+    if (sharedClub) {
+      setOpenSharedGameId(id)
+      return
+    }
     setSharedGame(null)
     clearShareHash()
     setShareFlash('')
@@ -206,16 +237,21 @@ export function App() {
     setPage('club')
   }
 
-  function closeSharedGame() {
+  function showSharedClub() {
+    setOpenSharedGameId(null)
+    setShareFlash('')
+  }
+
+  function closeSharedView() {
     setSharedGame(null)
+    setSharedClub(null)
+    setOpenSharedGameId(null)
     clearShareHash()
     setShareFlash('')
     setPage('club')
   }
 
-  async function shareOpenGame() {
-    if (!openGame) return
-    const url = buildShareUrl(openGame)
+  async function copyShareLink(url: string) {
     try {
       await navigator.clipboard.writeText(url)
       setShareFlash('Link copied')
@@ -225,9 +261,24 @@ export function App() {
     }
   }
 
-  const viewingGame = page === 'club' && openGame !== null
-  const displayedGame = sharedGame ?? (viewingGame ? openGame : null)
-  const isSharedView = sharedGame !== null
+  function shareOpenGame() {
+    if (!openGame) return
+    void copyShareLink(buildShareUrl(openGame))
+  }
+
+  function shareClub() {
+    const url = buildClubShareUrl(club)
+    if (!url) {
+      setShareFlash('Too big')
+      return
+    }
+    setConfirmingGameId(null)
+    void copyShareLink(url)
+  }
+
+  const viewingGame = sharedClub === null && page === 'club' && openGame !== null
+  const displayedGame = sharedGame ?? sharedClubGame ?? (viewingGame ? openGame : null)
+  const isSharedView = sharedGame !== null || sharedClub !== null
 
   return (
     <main className="sheet">
@@ -243,8 +294,16 @@ export function App() {
           )}
         </h1>
         {displayedGame ? (
-          <button type="button" className="nav-link" onClick={isSharedView ? closeSharedGame : showClub}>
-            {isSharedView ? '← Open app' : '← My club'}
+          <button
+            type="button"
+            className="nav-link"
+            onClick={sharedClub && !sharedGame ? showSharedClub : isSharedView ? closeSharedView : showClub}
+          >
+            {sharedClub && !sharedGame ? '← Club' : isSharedView ? '← Open app' : '← My club'}
+          </button>
+        ) : sharedClub ? (
+          <button type="button" className="nav-link" onClick={closeSharedView}>
+            ← Open app
           </button>
         ) : page === 'game' ? (
           <button type="button" className="nav-link" onClick={showClub}>
@@ -298,9 +357,9 @@ export function App() {
             </ul>
           </div>
         </section>
-      ) : page === 'club' ? (
+      ) : page === 'club' || sharedClub ? (
         <section className="club">
-          {club.length === 0 ? (
+          {shownClub.length === 0 ? (
             <div className="empty-state">
               <p className="empty">No games yet</p>
               <button type="button" className="record" onClick={showNewGame}>
@@ -309,6 +368,7 @@ export function App() {
             </div>
           ) : (
             <>
+              {sharedClub ? <p className="share-note">Shared club · read only</p> : null}
               <div className="board">
                 <div className="standings-head">
                   <h2>Ranking</h2>
@@ -329,20 +389,43 @@ export function App() {
                 </ol>
               </div>
               <div className="board">
-                <h2 className="board-title">Game history</h2>
-                <ul className="games">
-                {club.map((game) => (
+                <div className="board-title">
+                  <h2>Game history</h2>
+                  {sharedClub ? null : (
+                    <button type="button" className="share" onClick={shareClub}>
+                      {shareFlash || 'Share club'}
+                    </button>
+                  )}
+                </div>
+                <ul className={sharedClub ? 'games readonly' : 'games'}>
+                {shownClub.map((game) => (
                   <li key={game.id}>
-                    <button type="button" className="open-game" onClick={() => openGameDetail(game.id)}>
-                      {game.title ? <span className="game-title">{game.title}</span> : null}
-                      <PlayedAt playedAt={game.playedAt} />
-                    </button>
-                    <span>
-                      {game.players.length} {game.players.length === 1 ? 'player' : 'players'}
-                    </span>
-                    <button type="button" className="remove" onClick={() => removeGame(game.id)}>
-                      Remove
-                    </button>
+                    {confirmingGameId === game.id ? (
+                      <div className="confirm row-confirm">
+                        <p>Remove this game?</p>
+                        <button type="button" className="danger" onClick={() => removeGame(game.id)}>
+                          Remove
+                        </button>
+                        <button type="button" className="cancel" onClick={() => setConfirmingGameId(null)}>
+                          Cancel
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <button type="button" className="open-game" onClick={() => openGameDetail(game.id)}>
+                          {game.title ? <span className="game-title">{game.title}</span> : null}
+                          <PlayedAt playedAt={game.playedAt} />
+                        </button>
+                        <span>
+                          {game.players.length} {game.players.length === 1 ? 'player' : 'players'}
+                        </span>
+                        {sharedClub ? null : (
+                          <button type="button" className="remove" onClick={() => setConfirmingGameId(game.id)}>
+                            Remove
+                          </button>
+                        )}
+                      </>
+                    )}
                   </li>
                 ))}
                 </ul>
