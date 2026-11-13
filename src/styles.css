@@ -998,8 +998,18 @@ h1 .when-clock {
 }
 
 .board-title {
-  padding: 0.8rem 0.95rem 0.65rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.7rem 0.95rem;
   border-bottom: 1px solid var(--line);
+}
+
+.board-title .share {
+  min-height: 2.15rem;
+  padding: 0 0.9rem;
+  flex-shrink: 0;
 }
 
 .standings-head span:first-of-type {
@@ -1073,6 +1083,16 @@ h1 .when-clock {
   grid-template-columns: minmax(0, 1fr) auto auto;
   color: var(--muted);
   font-size: 0.95rem;
+}
+
+.games.readonly li {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.games li .row-confirm {
+  grid-column: 1 / -1;
+  flex-wrap: wrap;
+  border-radius: 0.85rem;
 }
 
 .open-game {

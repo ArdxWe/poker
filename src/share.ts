@@ -54,6 +54,9 @@ function parseSharedGame(value: unknown): Game | null {
   return { id: record.id, title, playedAt: record.playedAt, oneBuyIn, players }
 }
 
+const GAME_TOKEN_LIMIT = 12000
+const CLUB_TOKEN_LIMIT = 60000
+
 export function encodeGameShare(game: Game): string {
   const json = JSON.stringify(game)
   return bytesToBase64Url(new TextEncoder().encode(json))
@@ -61,7 +64,7 @@ export function encodeGameShare(game: Game): string {
 
 export function decodeGameShare(token: string): Game | null {
   try {
-    if (!token || token.length > 12000) return null
+    if (!token || token.length > GAME_TOKEN_LIMIT) return null
     const json = new TextDecoder().decode(base64UrlToBytes(token))
     return parseSharedGame(JSON.parse(json))
   } catch {
@@ -69,16 +72,60 @@ export function decodeGameShare(token: string): Game | null {
   }
 }
 
-export function readShareTokenFromLocation(locationLike: Pick<Location, 'hash'> = window.location): string | null {
+export function encodeClubShare(games: readonly Game[]): string {
+  const json = JSON.stringify(games)
+  return bytesToBase64Url(new TextEncoder().encode(json))
+}
+
+export function decodeClubShare(token: string): Game[] | null {
+  try {
+    if (!token || token.length > CLUB_TOKEN_LIMIT) return null
+    const json = new TextDecoder().decode(base64UrlToBytes(token))
+    const parsed: unknown = JSON.parse(json)
+    if (!Array.isArray(parsed)) return null
+    const games = parsed.flatMap((game) => {
+      const normalized = parseSharedGame(game)
+      return normalized ? [normalized] : []
+    })
+    return games.length > 0 ? games : null
+  } catch {
+    return null
+  }
+}
+
+function hashParams(locationLike: Pick<Location, 'hash'>): URLSearchParams | null {
   const hash = locationLike.hash.startsWith('#') ? locationLike.hash.slice(1) : locationLike.hash
   if (!hash) return null
-  const params = new URLSearchParams(hash.includes('=') ? hash : `g=${hash}`)
+  return new URLSearchParams(hash.includes('=') ? hash : `g=${hash}`)
+}
+
+export function readShareTokenFromLocation(locationLike: Pick<Location, 'hash'> = window.location): string | null {
+  const params = hashParams(locationLike)
+  if (!params || params.has('c')) return null
   const token = params.get('g')
+  return token && token.length > 0 ? token : null
+}
+
+export function readClubTokenFromLocation(locationLike: Pick<Location, 'hash'> = window.location): string | null {
+  const params = hashParams(locationLike)
+  if (!params) return null
+  const token = params.get('c')
   return token && token.length > 0 ? token : null
 }
 
 export function buildShareUrl(game: Game, origin = window.location.origin, pathname = window.location.pathname): string {
   return `${origin}${pathname}#g=${encodeGameShare(game)}`
+}
+
+export function buildClubShareUrl(
+  games: readonly Game[],
+  origin = window.location.origin,
+  pathname = window.location.pathname,
+): string | null {
+  if (games.length === 0) return null
+  const token = encodeClubShare(games)
+  if (token.length > CLUB_TOKEN_LIMIT) return null
+  return `${origin}${pathname}#c=${token}`
 }
 
 export function clearShareHash(): void {
