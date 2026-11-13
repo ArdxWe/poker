@@ -76,6 +76,7 @@ export function App() {
       setSharedGame(readSharedGame())
       setSharedClub(readSharedClub())
       setOpenSharedGameId(null)
+      setConfirmingGameId(null)
     }
     window.addEventListener('hashchange', onHashChange)
     return () => window.removeEventListener('hashchange', onHashChange)
@@ -287,7 +288,7 @@ export function App() {
         <h1 className={displayedGame ? (displayedGame.title ? 'dated' : 'dated untitled') : 'home'}>
           {displayedGame ? (
             displayedGame.title || <PlayedAt playedAt={displayedGame.playedAt} />
-          ) : page === 'game' ? (
+          ) : page === 'game' && !sharedClub ? (
             'New game'
           ) : (
             "Texas Hold'em Poker Club"
@@ -400,7 +401,7 @@ export function App() {
                 <ul className={sharedClub ? 'games readonly' : 'games'}>
                 {shownClub.map((game) => (
                   <li key={game.id}>
-                    {confirmingGameId === game.id ? (
+                    {!sharedClub && confirmingGameId === game.id ? (
                       <div className="confirm row-confirm">
                         <p>Remove this game?</p>
                         <button type="button" className="danger" onClick={() => removeGame(game.id)}>
