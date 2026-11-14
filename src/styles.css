@@ -1,6 +1,6 @@
 :root {
   color: #1c1814;
-  background: #11462c;
+  background: #f7f2ea;
   font-family: "Avenir Next", "Segoe UI", sans-serif;
   font-size: 16px;
   line-height: 1.4;
@@ -28,9 +28,7 @@ body,
 body {
   margin: 0;
   min-height: 100dvh;
-  background:
-    radial-gradient(900px 480px at 50% -8%, rgba(255, 255, 255, 0.14), transparent 55%),
-    linear-gradient(180deg, #1f7a49 0%, #145c38 42%, #0c3320 100%);
+  background: var(--paper);
 }
 
 #root {
@@ -49,7 +47,7 @@ select {
 button {
   cursor: pointer;
   font-weight: 600;
-  border-radius: 999px;
+  border-radius: 0.55rem;
   transition:
     background-color 0.15s ease,
     color 0.15s ease,
@@ -103,18 +101,12 @@ button:disabled {
   }
 
   .sheet {
-    width: min(48rem, 100%);
+    width: min(40rem, 100%);
     min-height: calc(100dvh - 3.5rem - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
     margin: 0 auto;
-    padding:
-      1.7rem
-      clamp(1rem, 4vw, 2.5rem)
-      2.1rem
-      clamp(1rem, 4vw, 2.5rem);
-    border-radius: 1.4rem;
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.7),
-      0 22px 50px rgba(4, 20, 12, 0.32);
+    padding: 1.25rem 0 2rem;
+    border-radius: 0;
+    box-shadow: none;
   }
 }
 
@@ -129,11 +121,23 @@ button:disabled {
 
 header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  gap: 1rem 1.25rem;
+  gap: 1rem;
   width: 100%;
   min-height: 2.75rem;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-shrink: 0;
+}
+
+.header-actions .nav-link {
+  min-height: 0;
+  padding: 0;
 }
 
 h1 {
@@ -141,15 +145,15 @@ h1 {
   flex: 1;
   min-width: 0;
   font-family: Georgia, "Iowan Old Style", Palatino, serif;
-  font-size: 2.35rem;
+  font-size: clamp(1.45rem, 4.2vw, 1.85rem);
   font-weight: 500;
-  letter-spacing: -0.04em;
-  line-height: 1.15;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
 }
 
 h1.dated,
 h1.home {
-  font-size: clamp(1.55rem, 5.2vw, 2.05rem);
+  font-size: clamp(1.35rem, 4vw, 1.7rem);
 }
 
 h1.untitled {
@@ -196,9 +200,9 @@ h1 .when-clock {
 .new-game {
   color: #fff;
   background: var(--felt);
-  border: 1.5px solid var(--felt-deep);
-  box-shadow: 0 2px 0 var(--felt-deep);
-  font-weight: 700;
+  border: 0;
+  box-shadow: none;
+  font-weight: 600;
 }
 
 .new-game:hover,
@@ -212,10 +216,12 @@ h1 .when-clock {
 }
 
 .nav-link {
-  border: 1.5px solid #e4d5c2;
-  background: #f7f2ea;
-  color: var(--ink);
-  box-shadow: 0 1px 0 #eadfd1;
+  min-height: 2.25rem;
+  padding: 0 0.2rem;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  box-shadow: none;
 }
 
 .nav-link:hover,
@@ -269,10 +275,11 @@ h1 .when-clock {
   justify-content: space-between;
   gap: 1rem;
   margin-top: 0;
-  padding: 0.85rem 0.95rem;
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: 1rem;
+  padding: 0.85rem 0;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
 }
 
 .unit span:not(.unit-end),
@@ -281,10 +288,10 @@ h1 .when-clock {
 .hand-columns span,
 .standings-head span {
   color: var(--muted);
-  font-size: 0.78rem;
+  font-size: 0.82rem;
   font-weight: 600;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .unit input,
@@ -418,9 +425,9 @@ h1 .when-clock {
   min-height: 2.15rem;
   padding: 0;
   color: var(--felt);
-  border-color: #b7d2c4;
+  border-color: var(--line);
   background: #fff;
-  box-shadow: 0 1px 0 #d7ebe0;
+  box-shadow: none;
   font-size: 1.2rem;
   line-height: 1;
 }
@@ -468,13 +475,14 @@ h1 .when-clock {
 .remove {
   justify-self: end;
   padding: 0.38rem 0.72rem;
-  border: 1.5px solid #f0c7c2;
-  background: #fff;
+  border: 0;
+  background: transparent;
   color: var(--danger);
   font-size: 0.82rem;
   line-height: 1.2;
   white-space: nowrap;
-  box-shadow: 0 1px 0 #f6ddd9;
+  box-shadow: none;
+  padding-right: 0;
 }
 
 .remove:hover {
@@ -493,10 +501,11 @@ h1 .when-clock {
   align-items: center;
   gap: 0.65rem;
   margin-top: 0.35rem;
-  padding: 0.85rem 0.95rem;
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: 1rem;
+  padding: 0.85rem 0;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
 }
 
 .add input {
@@ -516,8 +525,8 @@ h1 .when-clock {
 .confirm .danger {
   color: #fff;
   background: var(--felt);
-  border-color: var(--felt-deep);
-  box-shadow: 0 2px 0 var(--felt-deep);
+  border-color: transparent;
+  box-shadow: none;
 }
 
 .add button {
@@ -547,12 +556,12 @@ h1 .when-clock {
   flex-direction: column;
   align-items: flex-start;
   justify-content: flex-start;
-  gap: 0.25rem;
+  gap: 0.2rem;
   min-width: 0;
-  padding: 0.75rem 0.7rem;
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: 0.9rem;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
 }
 
 .summary dt {
@@ -597,10 +606,11 @@ h1 .when-clock {
     grid-template-columns: auto auto minmax(0, 1fr);
     grid-template-rows: auto auto;
     gap: 0.45rem 0.4rem;
-    padding: 0.7rem 0.7rem 0.65rem;
-    background: var(--card);
-    border: 1px solid var(--line);
-    border-radius: 0.95rem;
+    padding: 0.75rem 0;
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid var(--line);
+    border-radius: 0;
   }
 
   .player .name {
@@ -782,11 +792,12 @@ h1 .when-clock {
 .save-name {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 0.65rem;
-  padding: 0.85rem 0.95rem;
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: 1rem;
+  padding: 0.85rem 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
 }
 
 .save-name input {
@@ -819,10 +830,10 @@ h1 .when-clock {
 
 .clear,
 .cancel {
-  color: #3a322c;
-  background: #fff;
-  border: 1.5px solid #d3c4b2;
-  box-shadow: 0 2px 0 #e7d9c8;
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid var(--line);
+  box-shadow: none;
 }
 
 .clear {
@@ -855,12 +866,11 @@ h1 .when-clock {
 .empty {
   margin: 0;
   width: 100%;
-  padding: 2.2rem 1rem;
+  padding: 1.5rem 0;
   color: var(--muted);
-  text-align: center;
-  background: rgba(255, 252, 248, 0.7);
-  border: 1.5px dashed #ddcfbd;
-  border-radius: 1rem;
+  text-align: left;
+  background: none;
+  border: 0;
 }
 
 .empty-state .record {
@@ -883,22 +893,21 @@ h1 .when-clock {
   align-items: center;
   gap: 0.3rem;
   margin-top: 0;
-  padding: 0.4rem 0.85rem 0.4rem 0.7rem;
-  border: 1.5px solid #e4d5c2;
-  background: #f7f2ea;
-  box-shadow: 0 1px 0 #eadfd1;
+  padding: 0.35rem 0.75rem;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .back {
-  color: var(--felt);
+  color: var(--muted);
+  padding-left: 0;
 }
 
 .share {
   color: #fff;
   background: var(--felt);
-  border-color: var(--felt-deep);
-  box-shadow: 0 2px 0 var(--felt-deep);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .back:hover,
@@ -937,13 +946,165 @@ h1 .when-clock {
   font-weight: 600;
 }
 
+.door {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.door > .nav-link,
+.door form .nav-link {
+  align-self: flex-start;
+  width: auto;
+}
+
+.door h2 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.door form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0;
+  background: none;
+  border: 0;
+}
+
+.door form + form {
+  margin-top: 0.6rem;
+  padding-top: 1.35rem;
+  border-top: 1px solid var(--line);
+}
+
+.door label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  color: var(--ink);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.door input,
+.row-confirm input,
+.save-name input[type='password'] {
+  min-height: 2.55rem;
+  padding: 0.5rem 0.75rem;
+  border: 1.5px solid #e3d5c4;
+  border-radius: 0.7rem;
+  background: #fff;
+  font-size: 1.05rem;
+}
+
+.door input:focus,
+.row-confirm input:focus,
+.save-name input[type='password']:focus {
+  border-color: var(--felt);
+  outline: none;
+}
+
+.save-name input[type='password'] {
+  flex: 1 1 100%;
+}
+
+.club-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.1rem;
+  margin: -0.35rem 0 0;
+}
+
+.club-actions .nav-link {
+  min-height: 0;
+  padding: 0;
+}
+
+.pass-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.35rem;
+}
+
+.pass-page .share-note {
+  font-weight: 500;
+}
+
+.pass-code {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.pass-code strong {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 1.55rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+}
+
+.pass-code .nav-link {
+  min-height: 0;
+  padding: 0;
+}
+
+.access {
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.access.can-edit {
+  color: var(--felt);
+}
+
+.access.read-only {
+  color: var(--muted);
+}
+
+.unlock {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 0.85rem;
+}
+
+.unlock input {
+  flex: 1 1 12rem;
+  min-height: 2.55rem;
+  padding: 0.5rem 0.75rem;
+  border: 1.5px solid #e3d5c4;
+  border-radius: 0.7rem;
+  background: #fff;
+  font-size: 1.05rem;
+}
+
+.unlock button {
+  min-height: 2.4rem;
+  padding: 0 0.95rem;
+  color: #fff;
+  background: var(--felt);
+  border: 0;
+  font-weight: 600;
+}
+
+.row-confirm input,
+.row-confirm .share-note {
+  flex: 1 1 100%;
+}
+
 .club h2 {
   margin: 0;
   color: var(--muted);
-  font-size: 0.78rem;
+  font-size: 0.95rem;
   font-weight: 600;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
 }
 
 .club > h2:not(:first-child) {
@@ -951,9 +1112,10 @@ h1 .when-clock {
 }
 
 .board {
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: 1rem;
+  background: transparent;
+  border: 0;
+  border-top: 1px solid var(--line);
+  border-radius: 0;
   overflow: hidden;
 }
 
@@ -974,7 +1136,7 @@ h1 .when-clock {
   align-items: center;
   gap: 0.75rem;
   margin: 0;
-  padding: 0.78rem 0.95rem;
+  padding: 0.7rem 0;
   background: transparent;
 }
 
@@ -988,7 +1150,7 @@ h1 .when-clock {
   grid-template-columns: minmax(0, 1fr) 4.25rem 5.75rem;
   column-gap: 0.75rem;
   align-items: baseline;
-  padding: 0.8rem 0.95rem 0.65rem;
+  padding: 0.7rem 0 0.55rem;
   border-bottom: 1px solid var(--line);
 }
 
@@ -1002,7 +1164,7 @@ h1 .when-clock {
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  padding: 0.7rem 0.95rem;
+  padding: 0.7rem 0;
   border-bottom: 1px solid var(--line);
 }
 
@@ -1025,8 +1187,8 @@ h1 .when-clock {
   grid-template-columns: 1.7rem minmax(0, 1fr) 4.25rem 5.75rem;
   column-gap: 0.75rem;
   align-items: center;
-  padding-right: 0.95rem;
-  padding-left: 0.95rem;
+  padding-right: 0;
+  padding-left: 0;
 }
 
 .standings li::before {
@@ -1080,13 +1242,13 @@ h1 .when-clock {
 }
 
 .games li {
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   color: var(--muted);
   font-size: 0.95rem;
 }
 
 .games.readonly li {
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .games li .row-confirm {
@@ -1097,9 +1259,9 @@ h1 .when-clock {
 
 .open-game {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.12rem;
+  flex-flow: row wrap;
+  align-items: baseline;
+  gap: 0.15rem 0.65rem;
   width: 100%;
   padding: 0.15rem;
   border: 0;
@@ -1135,18 +1297,17 @@ h1 .when-clock {
   justify-content: space-between;
   gap: 1rem;
   margin-top: 1.15rem;
-  padding: 0.85rem 0.95rem;
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: 1rem;
+  padding: 0.85rem 0;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
 }
 
 .game-name span {
   color: var(--muted);
-  font-size: 0.78rem;
+  font-size: 0.9rem;
   font-weight: 600;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
 }
 
 .game-name input {
@@ -1209,10 +1370,10 @@ h1 .when-clock {
 .confirm {
   justify-content: flex-end;
   gap: 0.5rem;
-  padding: 0.35rem;
-  background: #fff;
-  border: 1px solid var(--line);
-  border-radius: 999px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
 }
 
 .confirm p {
@@ -1230,7 +1391,7 @@ h1 .when-clock {
 .confirm .danger {
   background: var(--danger);
   border-color: var(--danger-deep);
-  box-shadow: 0 2px 0 var(--danger-deep);
+  box-shadow: none;
 }
 
 .confirm .danger:hover {

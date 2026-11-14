@@ -22,7 +22,12 @@ import {
   readClubTokenFromLocation,
   readShareTokenFromLocation,
 } from './share'
-import { loadClub, loadSession, saveClub, saveSession } from './storage'
+import { generatePassword, type ClubRecord } from './clubs'
+import { CloudOfflineError } from './cloud'
+import { clearLegacyGames, createBrowserClubClient, legacyClubName, legacyGames } from './serverClient'
+import { loadSession, saveSession } from './storage'
+
+const clubClient = createBrowserClubClient()
 
 function PlayedAt({ playedAt }: { playedAt: string }) {
   const date = new Date(playedAt)
@@ -56,7 +61,18 @@ export function App() {
   const [confirmingGameId, setConfirmingGameId] = useState<string | null>(null)
   const [shareFlash, setShareFlash] = useState('')
   const [session, setSession] = useState<Session>(loadSession)
-  const [club, setClub] = useState<Game[]>(loadClub)
+  const [opened, setOpened] = useState<ClubRecord | null>(() => clubClient.cached())
+  const [booting, setBooting] = useState(() => clubClient.hasSession() && clubClient.cached() === null)
+  const [offline, setOffline] = useState(false)
+  const [phoneGames, setPhoneGames] = useState<Game[]>(legacyGames)
+  const [askingPassword, setAskingPassword] = useState(() => !clubClient.hasSession())
+  const [readPassword, setReadPassword] = useState('')
+  const [newClubName, setNewClubName] = useState(() => (legacyGames().length > 0 ? legacyClubName() : ''))
+  const [doorMessage, setDoorMessage] = useState('')
+  const [creating, setCreating] = useState(true)
+  const [writeError, setWriteError] = useState('')
+  const [issued, setIssued] = useState<{ password: string } | null>(null)
+  const [copiedPassword, setCopiedPassword] = useState(false)
   const [draftName, setDraftName] = useState('')
   const [gameName, setGameName] = useState('')
   const [namingGame, setNamingGame] = useState(false)
@@ -68,8 +84,37 @@ export function App() {
   }, [session])
 
   useEffect(() => {
-    saveClub(club)
-  }, [club])
+    let live = true
+    clubClient.restore().then((club) => {
+      if (!live) return
+      setOpened(club)
+      setAskingPassword(club === null)
+      setOffline(false)
+      setBooting(false)
+    }).catch((error: unknown) => {
+      if (!live) return
+      if (error instanceof CloudOfflineError) setOffline(true)
+      setAskingPassword(true)
+      setBooting(false)
+    })
+    return () => {
+      live = false
+    }
+  }, [])
+
+  useEffect(() => {
+    function onVisible() {
+      if (document.visibilityState !== 'visible' || !opened) return
+      void clubClient.refresh(opened).then((club) => {
+        setOpened(club)
+        setOffline(false)
+      }).catch((error: unknown) => {
+        if (error instanceof CloudOfflineError) setOffline(true)
+      })
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
+  }, [opened])
 
   useEffect(() => {
     function onHashChange() {
@@ -89,6 +134,7 @@ export function App() {
   }, [page, openGameId, sharedGame, sharedClub, openSharedGameId])
 
   const summary = summarize(session)
+  const club = opened?.games ?? []
   const openGame = club.find((game) => game.id === openGameId) ?? null
   const sharedClubGame = sharedClub?.find((game) => game.id === openSharedGameId) ?? null
   const shownClub = sharedClub ?? club
@@ -180,10 +226,22 @@ export function App() {
     setGameName('')
   }
 
-  function recordHand() {
+  async function recordHand() {
     const game = recordGame(session, new Date().toISOString(), newId(), gameName)
     if (!game) return
-    setClub((current) => [game, ...current])
+    if (opened) {
+      const saved = await clubClient.saveGame(opened, game, '')
+      if (!saved.ok) {
+        setWriteError('Could not save. This game is still here.')
+        return
+      }
+      setOpened(saved.club)
+      setOffline(false)
+    } else {
+      setWriteError('Create a club before saving this game.')
+      return
+    }
+    setWriteError('')
     setGameName('')
     setNamingGame(false)
     setConfirmingClear(false)
@@ -197,10 +255,117 @@ export function App() {
     }))
   }
 
-  function removeGame(id: string) {
-    setClub((current) => current.filter((game) => game.id !== id))
+  async function removeGame(id: string) {
+    if (opened) {
+      const removed = await clubClient.deleteGame(opened, id, '')
+      if (!removed.ok) {
+        setWriteError('Could not remove that game.')
+        return
+      }
+      setOpened(removed.club)
+      setOffline(false)
+    } else {
+      return
+    }
+    setWriteError('')
     setConfirmingGameId(null)
     if (openGameId === id) setOpenGameId(null)
+  }
+
+  async function openClubDoor(event: FormEvent) {
+    event.preventDefault()
+    try {
+      const clubRecord = await clubClient.open(readPassword)
+      if (!clubRecord) {
+        setDoorMessage('No club for that password.')
+        return
+      }
+      setOpened(clubRecord)
+      setAskingPassword(false)
+      setDoorMessage('')
+      setReadPassword('')
+      setOffline(false)
+    } catch {
+      setDoorMessage('Could not open the club. Try again.')
+    }
+  }
+
+  async function createClubDoor(event: FormEvent) {
+    event.preventDefault()
+    if (!newClubName.trim()) {
+      setDoorMessage('Add a club name.')
+      return
+    }
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const password = generatePassword()
+      let created: Awaited<ReturnType<typeof clubClient.create>>
+      try {
+        created = await clubClient.create({
+          name: newClubName,
+          readPassword: password,
+          writePassword: password,
+          games: phoneGames,
+        })
+      } catch {
+        setDoorMessage('Could not create the club. Try again.')
+        return
+      }
+      if (!created.ok) {
+        if (created.reason === 'name') {
+          setDoorMessage('That club name is already used.')
+          return
+        }
+        if (created.reason === 'empty') {
+          setDoorMessage('Add a club name.')
+          return
+        }
+        if (created.reason === 'failed') {
+          setDoorMessage('Could not create the club. Try again.')
+          return
+        }
+        continue
+      }
+      const uploaded = phoneGames.every((game) => created.club.games.some((saved) => saved.id === game.id))
+      if (uploaded) {
+        clearLegacyGames()
+        setPhoneGames([])
+      }
+      setOpened(created.club)
+      setIssued({ password })
+      setAskingPassword(false)
+      setCreating(true)
+      setDoorMessage('')
+      setReadPassword('')
+      setNewClubName('')
+      setOffline(false)
+      return
+    }
+    setDoorMessage('Could not create the club. Try again.')
+  }
+
+  function switchClub() {
+    setAskingPassword(true)
+    setCreating(true)
+    setPage('club')
+    setOpenGameId(null)
+    setDoorMessage('')
+    setWriteError('')
+  }
+
+  function leaveDoor() {
+    setAskingPassword(false)
+    setCreating(true)
+    setDoorMessage('')
+  }
+
+  function showCreateClub() {
+    setCreating(true)
+    setDoorMessage('')
+  }
+
+  function showOpenClub() {
+    setCreating(false)
+    setDoorMessage('')
   }
 
   function showClub() {
@@ -214,6 +379,7 @@ export function App() {
   }
 
   function showNewGame() {
+    if (booting || !opened) return
     clubScroll.current = 0
     setSharedGame(null)
     setSharedClub(null)
@@ -252,6 +418,15 @@ export function App() {
     setPage('club')
   }
 
+  async function copyPassword(value: string) {
+    try {
+      await navigator.clipboard.writeText(value)
+    } catch {
+      window.prompt('Copy this password', value)
+    }
+    setCopiedPassword(true)
+  }
+
   async function copyShareLink(url: string) {
     try {
       await navigator.clipboard.writeText(url)
@@ -288,10 +463,14 @@ export function App() {
         <h1 className={displayedGame ? (displayedGame.title ? 'dated' : 'dated untitled') : 'home'}>
           {displayedGame ? (
             displayedGame.title || <PlayedAt playedAt={displayedGame.playedAt} />
+          ) : askingPassword ? (
+            'Poker club'
           ) : page === 'game' && !sharedClub ? (
             'New game'
+          ) : opened && !sharedClub ? (
+            opened.name
           ) : (
-            "Texas Hold'em Poker Club"
+            'Poker club'
           )}
         </h1>
         {displayedGame ? (
@@ -306,14 +485,29 @@ export function App() {
           <button type="button" className="nav-link" onClick={closeSharedView}>
             ← Open app
           </button>
-        ) : page === 'game' ? (
+        ) : askingPassword && !creating ? (
+          <button type="button" className="nav-link" onClick={showCreateClub}>
+            Back
+          </button>
+        ) : askingPassword ? (
+          <button type="button" className="nav-link" onClick={showOpenClub}>
+            Open club
+          </button>
+        ) : issued ? null : page === 'game' ? (
           <button type="button" className="nav-link" onClick={showClub}>
             My club
           </button>
         ) : (
-          <button type="button" className="new-game" onClick={showNewGame}>
-            New game
-          </button>
+          <div className="header-actions">
+            {opened && !sharedClub ? (
+              <button type="button" className="nav-link" onClick={switchClub}>
+                Switch club
+              </button>
+            ) : null}
+            <button type="button" className="new-game" onClick={showNewGame}>
+              New game
+            </button>
+          </div>
         )}
       </header>
 
@@ -358,15 +552,77 @@ export function App() {
             </ul>
           </div>
         </section>
+      ) : askingPassword && !sharedClub ? (
+        <section className="door">
+          {creating ? (
+            <form onSubmit={createClubDoor}>
+              <label>
+                Club name
+                <input value={newClubName} onChange={(event) => setNewClubName(event.target.value)} />
+              </label>
+              <p className="share-note">
+                {phoneGames.length > 0
+                  ? phoneGames.length === 1
+                    ? 'Saves 1 game from this phone.'
+                    : `Saves ${phoneGames.length} games from this phone.`
+                  : 'A password is created for you.'}
+              </p>
+              <button type="submit" className="record">
+                Create club
+              </button>
+              {opened ? (
+                <button type="button" className="nav-link" onClick={leaveDoor}>
+                  Back
+                </button>
+              ) : null}
+            </form>
+          ) : (
+            <form onSubmit={openClubDoor}>
+              <label>
+                Password
+                <input
+                  type="password"
+                  autoComplete="current-password"
+                  value={readPassword}
+                  onChange={(event) => setReadPassword(event.target.value)}
+                />
+              </label>
+              <button type="submit" className="record">
+                Open club
+              </button>
+            </form>
+          )}
+          {doorMessage ? <p className="share-note">{doorMessage}</p> : null}
+        </section>
+      ) : issued && !sharedClub ? (
+        <section className="pass-page">
+          <p className="share-note">Shown once. Save it.</p>
+          <p className="pass-code">
+            <strong>{issued.password}</strong>
+            <button type="button" className="nav-link" onClick={() => void copyPassword(issued.password)}>
+              {copiedPassword ? 'Copied' : 'Copy'}
+            </button>
+          </p>
+          <button
+            type="button"
+            className="record"
+            onClick={() => {
+              setIssued(null)
+              setCopiedPassword(false)
+            }}
+          >
+            Enter club
+          </button>
+        </section>
       ) : page === 'club' || sharedClub ? (
         <section className="club">
-          {shownClub.length === 0 ? (
-            <div className="empty-state">
-              <p className="empty">No games yet</p>
-              <button type="button" className="record" onClick={showNewGame}>
-                Start a new game
-              </button>
-            </div>
+          {!sharedClub && opened && offline ? (
+            <p className="share-note">Could not reach the server. Showing the last saved games.</p>
+          ) : null}
+          {!sharedClub && booting && !opened ? (
+            <p className="empty">Opening club…</p>
+          ) : shownClub.length === 0 ? (
+            <p className="empty">No games yet</p>
           ) : (
             <>
               {sharedClub ? <p className="share-note">Shared club · read only</p> : null}
@@ -392,9 +648,9 @@ export function App() {
               <div className="board">
                 <div className="board-title">
                   <h2>Game history</h2>
-                  {sharedClub ? null : (
-                    <button type="button" className="share" onClick={shareClub}>
-                      {shareFlash || 'Share club'}
+                  {sharedClub || !opened ? null : (
+                    <button type="button" className="nav-link" onClick={shareClub}>
+                      {shareFlash || 'Share'}
                     </button>
                   )}
                 </div>
@@ -402,25 +658,36 @@ export function App() {
                 {shownClub.map((game) => (
                   <li key={game.id}>
                     {!sharedClub && confirmingGameId === game.id ? (
-                      <div className="confirm row-confirm">
+                      <form
+                        className="confirm row-confirm"
+                        onSubmit={(event) => {
+                          event.preventDefault()
+                          void removeGame(game.id)
+                        }}
+                      >
                         <p>Remove this game?</p>
-                        <button type="button" className="danger" onClick={() => removeGame(game.id)}>
+                        {writeError ? <p className="share-note">{writeError}</p> : null}
+                        <button type="submit" className="danger">
                           Remove
                         </button>
-                        <button type="button" className="cancel" onClick={() => setConfirmingGameId(null)}>
+                        <button
+                          type="button"
+                          className="cancel"
+                          onClick={() => {
+                            setConfirmingGameId(null)
+                            setWriteError('')
+                          }}
+                        >
                           Cancel
                         </button>
-                      </div>
+                      </form>
                     ) : (
                       <>
                         <button type="button" className="open-game" onClick={() => openGameDetail(game.id)}>
                           {game.title ? <span className="game-title">{game.title}</span> : null}
                           <PlayedAt playedAt={game.playedAt} />
                         </button>
-                        <span>
-                          {game.players.length} {game.players.length === 1 ? 'player' : 'players'}
-                        </span>
-                        {sharedClub ? null : (
+                        {sharedClub || !opened ? null : (
                           <button type="button" className="remove" onClick={() => setConfirmingGameId(game.id)}>
                             Remove
                           </button>
@@ -585,6 +852,7 @@ export function App() {
                 <button type="button" className="cancel" onClick={cancelSave}>
                   Cancel
                 </button>
+                {writeError ? <p className="share-note">{writeError}</p> : null}
               </form>
             ) : confirmingClear ? (
               <div className="confirm">
