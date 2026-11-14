@@ -1,7 +1,11 @@
 import assert from 'node:assert/strict'
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import test from 'node:test'
 import type { Game } from '../ledger.ts'
-import { createMemoryClubStore, handleClubRequest } from './ledger.ts'
+import { createFileClubStore } from './fileStore.ts'
+import { createMemoryClubStore, handleClubRequest, type ClubStore } from './ledger.ts'
 
 const sample: Game = {
   id: 'g1',
@@ -88,4 +92,66 @@ test('a club that already has games ignores a second phone', async () => {
   if (!imported.ok) return
   assert.equal(imported.club.games.length, 1)
   assert.equal(imported.club.games[0]?.id, 'g1')
+})
+
+test('a failed create releases the club name', async () => {
+  const store = createMemoryClubStore()
+  let failWrites = true
+  const flaky: ClubStore = {
+    get: (key) => store.get(key),
+    setNew: (key, value) => store.setNew(key, value),
+    set: async (key, value) => {
+      if (failWrites && key.startsWith('game/')) throw new Error('disk')
+      await store.set(key, value)
+    },
+    delete: (key) => store.delete(key),
+    list: (prefix) => store.list(prefix),
+  }
+  const created = await handleClubRequest(flaky, {
+    op: 'create',
+    name: 'Friday night',
+    readPassword: 'look',
+    games: [sample],
+  })
+  assert.equal(created.ok, false)
+  if (created.ok) return
+  assert.equal(created.reason, 'failed')
+  assert.equal((await handleClubRequest(store, { op: 'open', readPassword: 'look' })).ok, false)
+  failWrites = false
+  const again = await handleClubRequest(flaky, {
+    op: 'create',
+    name: 'Friday night',
+    readPassword: 'look',
+    games: [],
+  })
+  assert.equal(again.ok, true)
+})
+
+test('a corrupt club file is not replaced with an empty store', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'felt-clubs-'))
+  try {
+    const file = join(dir, 'clubs.json')
+    const broken = '{"name/kept":"hash"'
+    await writeFile(file, broken)
+    const store = createFileClubStore(file)
+    await assert.rejects(() => store.get('name/kept'))
+    assert.equal(await readFile(file, 'utf8'), broken)
+    await assert.rejects(() => store.set('name/other', 'value'))
+    assert.equal(await readFile(file, 'utf8'), broken)
+  } finally {
+    await rm(dir, { recursive: true, force: true })
+  }
+})
+
+test('a missing club file starts empty', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'felt-clubs-'))
+  try {
+    const file = join(dir, 'clubs.json')
+    const store = createFileClubStore(file)
+    assert.equal(await store.get('missing'), null)
+    assert.equal(await store.setNew('name/kept', 'hash'), true)
+    assert.equal(await store.get('name/kept'), 'hash')
+  } finally {
+    await rm(dir, { recursive: true, force: true })
+  }
 })

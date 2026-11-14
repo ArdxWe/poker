@@ -114,18 +114,37 @@ export async function handleClubRequest(store: ClubStore, body: unknown): Promis
     const nameKey = name.toLocaleLowerCase()
     const nameLock = `name/${await digestSecret(nameKey)}`
     if (!(await store.setNew(nameLock, readHash))) return { ok: false, reason: 'name' }
-    if (!(await store.setNew(`secret/${readHash}`, 'club'))) {
-      await store.delete(nameLock)
-      return { ok: false, reason: 'read' }
+    const claimed = [nameLock]
+    try {
+      if (!(await store.setNew(`secret/${readHash}`, 'club'))) {
+        await store.delete(nameLock)
+        return { ok: false, reason: 'read' }
+      }
+      claimed.push(`secret/${readHash}`)
+      const clubKey = `club/${readHash}`
+      await store.set(
+        clubKey,
+        JSON.stringify({ id: readHash, name, nameKey, readHash, writeHash: readHash }),
+      )
+      claimed.push(clubKey)
+      for (const game of readGames(request.games)) {
+        const gameKey = `game/${readHash}/${game.id}`
+        await store.set(gameKey, JSON.stringify(game))
+        claimed.push(gameKey)
+      }
+      const opened = await openSession(store, readHash)
+      if (!opened.ok) throw new Error('Club was not stored')
+      return opened
+    } catch {
+      for (const key of claimed.reverse()) {
+        try {
+          await store.delete(key)
+        } catch {
+          // Keep releasing the rest so the name can be used again.
+        }
+      }
+      return { ok: false, reason: 'failed' }
     }
-    await store.set(
-      `club/${readHash}`,
-      JSON.stringify({ id: readHash, name, nameKey, readHash, writeHash: readHash }),
-    )
-    for (const game of readGames(request.games)) {
-      await store.set(`game/${readHash}/${game.id}`, JSON.stringify(game))
-    }
-    return openSession(store, readHash)
   }
   if (request.op === 'open') {
     if (typeof request.readPassword !== 'string' || !request.readPassword.trim()) return { ok: false, reason: 'missing' }
