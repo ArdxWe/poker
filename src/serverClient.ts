@@ -8,6 +8,16 @@ const TOKEN_KEY = 'felt.server.token.v1'
 const ISSUED_KEY = 'felt.server.issued.v1'
 const CLUB_KEY = 'felt.server.club.v1'
 
+let generation = 0
+
+export function clubGeneration(): number {
+  return generation
+}
+
+function noteClubChange() {
+  generation += 1
+}
+
 function readToken(): string {
   try {
     return sessionStorage.getItem(TOKEN_KEY) ?? ''
@@ -122,7 +132,10 @@ export function createBrowserClubClient(): ClubClient {
     async restore() {
       const token = readToken()
       if (!token) return null
+      const seen = clubGeneration()
       const result = await post({ op: 'restore', token })
+      // This tab opened or edited a club while the request was in flight.
+      if (seen !== clubGeneration()) return readToken() ? readCachedClub() : null
       if (!result.ok) {
         clearToken()
         return null
@@ -135,11 +148,13 @@ export function createBrowserClubClient(): ClubClient {
       if (!token) return club
       const result = await post({ op: 'refresh', token })
       if (!result.ok) return club
+      noteClubChange()
       return rememberClub(asClub(result))
     },
     async open(readPassword) {
       const result = await post({ op: 'open', readPassword })
       if (!result.ok) return null
+      noteClubChange()
       writeToken(result.token)
       return rememberClub(asClub(result))
     },
@@ -158,6 +173,7 @@ export function createBrowserClubClient(): ClubClient {
         return { ok: false, reason: 'failed' }
       }
       const club = asClub(result)
+      noteClubChange()
       writeToken(result.token)
       writePendingPassword(input.readPassword)
       return { ok: true, club: rememberClub(club) }
@@ -174,6 +190,7 @@ export function createBrowserClubClient(): ClubClient {
       if (!token) return { ok: false, reason: 'denied' }
       const result = await post({ op: 'save', token, writePassword, game })
       if (!result.ok) return { ok: false, reason: result.reason === 'denied' ? 'denied' : 'failed' }
+      noteClubChange()
       return { ok: true, club: rememberClub(asClub(result)) }
     },
     async deleteGame(_club, gameId, writePassword): Promise<WriteResult> {
@@ -181,6 +198,7 @@ export function createBrowserClubClient(): ClubClient {
       if (!token) return { ok: false, reason: 'denied' }
       const result = await post({ op: 'delete', token, writePassword, gameId })
       if (!result.ok) return { ok: false, reason: result.reason === 'denied' ? 'denied' : 'failed' }
+      noteClubChange()
       return { ok: true, club: rememberClub(asClub(result)) }
     },
     async importGames(_club, games, writePassword): Promise<WriteResult> {
@@ -188,6 +206,7 @@ export function createBrowserClubClient(): ClubClient {
       if (!token) return { ok: false, reason: 'denied' }
       const result = await post({ op: 'import', token, writePassword, games })
       if (!result.ok) return { ok: false, reason: result.reason === 'denied' ? 'denied' : 'failed' }
+      noteClubChange()
       return { ok: true, club: rememberClub(asClub(result)) }
     },
   }

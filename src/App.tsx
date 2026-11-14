@@ -27,6 +27,7 @@ import { CloudOfflineError } from './cloud'
 import {
   clearLegacyGames,
   clearPendingPassword,
+  clubGeneration,
   createBrowserClubClient,
   legacyClubName,
   legacyGames,
@@ -96,19 +97,23 @@ export function App() {
 
   useEffect(() => {
     let live = true
+    const generation = clubGeneration()
     clubClient.restore().then((club) => {
       if (!live) return
+      setBooting(false)
+      // Keep a club this tab opened or edited while restore was in flight.
+      if (clubGeneration() !== generation) return
       setOpened(club)
       setAskingPassword(club === null && pendingPassword() === null)
       setOffline(false)
-      setBooting(false)
     }).catch((error: unknown) => {
       if (!live) return
+      setBooting(false)
+      if (clubGeneration() !== generation) return
       const saved = error instanceof CloudOfflineError ? clubClient.cached() : null
       if (error instanceof CloudOfflineError) setOffline(true)
       if (saved) setOpened(saved)
       setAskingPassword(saved === null && pendingPassword() === null)
-      setBooting(false)
     })
     return () => {
       live = false
