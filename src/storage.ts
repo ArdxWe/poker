@@ -1,7 +1,8 @@
-import { wholeNumber, type Game, type GamePlayer, type Player, type Session } from './ledger'
+import { wholeNumber, type Game, type GamePlayer, type Player, type Session } from './ledger.ts'
 
 export const STORAGE_KEY = 'felt.session.v1'
 export const CLUB_KEY = 'felt.club.v1'
+export const CLOUD_CACHE_KEY = 'felt.cloud.v1'
 
 export function emptySession(): Session {
   return { oneBuyIn: 200, players: [] }
@@ -35,6 +36,34 @@ export function saveClub(games: Game[]): void {
   localStorage.setItem(CLUB_KEY, JSON.stringify(games))
 }
 
+export type CachedClub = {
+  id: string
+  name: string
+  readHash: string
+  writeHash: string
+  readerId: string
+  writerId: string
+  games: Game[]
+}
+
+export function loadCloudCache(): CachedClub | null {
+  try {
+    const raw = localStorage.getItem(CLOUD_CACHE_KEY)
+    if (!raw) return null
+    return normalizeCachedClub(JSON.parse(raw))
+  } catch {
+    return null
+  }
+}
+
+export function saveCloudCache(club: CachedClub | null): void {
+  if (!club) {
+    localStorage.removeItem(CLOUD_CACHE_KEY)
+    return
+  }
+  localStorage.setItem(CLOUD_CACHE_KEY, JSON.stringify(club))
+}
+
 function normalizeSession(value: unknown): Session {
   if (!value || typeof value !== 'object') return emptySession()
   const record = value as { oneBuyIn?: unknown; players?: unknown }
@@ -60,6 +89,33 @@ function normalizePlayer(value: unknown): Player | null {
   if (record.left !== null && left === null) return null
   const name = typeof record.name === 'string' ? record.name : ''
   return { id: record.id, name, buyIns, left }
+}
+
+function normalizeCachedClub(value: unknown): CachedClub | null {
+  if (!value || typeof value !== 'object') return null
+  const record = value as {
+    id?: unknown
+    name?: unknown
+    readHash?: unknown
+    writeHash?: unknown
+    readerId?: unknown
+    writerId?: unknown
+    games?: unknown
+  }
+  const name = typeof record.name === 'string' ? record.name.trim() : ''
+  if (!name || typeof record.id !== 'string' || !record.id) return null
+  if (typeof record.readHash !== 'string' || typeof record.writeHash !== 'string') return null
+  if (typeof record.readerId !== 'string' || typeof record.writerId !== 'string') return null
+  if (!Array.isArray(record.games)) return null
+  return {
+    id: record.id,
+    name,
+    readHash: record.readHash,
+    writeHash: record.writeHash,
+    readerId: record.readerId,
+    writerId: record.writerId,
+    games: normalizeClub(record.games),
+  }
 }
 
 function normalizeClub(value: unknown): Game[] {
@@ -107,4 +163,8 @@ function positive(value: unknown): number | null {
   const whole = wholeNumber(value)
   if (whole === null || whole < 1) return null
   return whole
+}
+
+export function readStoredGame(value: unknown): Game | null {
+  return normalizeGame(value)
 }
