@@ -7,9 +7,11 @@
     "dev": "vite --host 0.0.0.0 --port 5173",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host 0.0.0.0 --port 4173",
-    "test": "node --experimental-strip-types --test src/ledger.test.ts src/share.test.ts"
+    "test": "node --experimental-strip-types --test src/ledger.test.ts src/share.test.ts src/clubs.test.ts src/cloud.test.ts src/server/ledger.test.ts"
   },
   "dependencies": {
+    "@netlify/blobs": "^11.1.9",
+    "leancloud-storage": "^4.15.2",
     "react": "^19.1.1",
     "react-dom": "^19.1.1"
   },
