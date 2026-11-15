@@ -1563,6 +1563,9 @@ h1 .when-clock {
 
 .hand-name {
   min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   color: #4f4943;
   font-size: 1.12rem;
   font-weight: 500;
