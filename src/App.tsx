@@ -76,6 +76,7 @@ export function App() {
   const [confirmingGameId, setConfirmingGameId] = useState<string | null>(null)
   const [shareFlash, setShareFlash] = useState('')
   const [shareFlashFor, setShareFlashFor] = useState('')
+  const [historyOpen, setHistoryOpen] = useState(false)
   const [session, setSession] = useState<Session>(loadSession)
   const [opened, setOpened] = useState<ClubRecord | null>(() => clubClient.cached())
   const [booting, setBooting] = useState(() => clubClient.hasSession() && clubClient.cached() === null)
@@ -688,9 +689,22 @@ export function App() {
                 </ol>
               </div>
               <div className="board club-games">
-                <div className="board-title">
+                <button
+                  type="button"
+                  className="board-title history-toggle"
+                  aria-expanded={historyOpen}
+                  onClick={() => {
+                    setHistoryOpen((open) => !open)
+                    setConfirmingGameId(null)
+                  }}
+                >
                   <h2>Game history</h2>
-                </div>
+                  <span />
+                  <span className="history-caret" aria-hidden="true">
+                    &gt;
+                  </span>
+                </button>
+                {historyOpen ? (
                 <ul className={sharedClub ? 'games readonly' : 'games'}>
                 {shownClub.map((game) => (
                   <li key={game.id}>
@@ -737,6 +751,7 @@ export function App() {
                   </li>
                 ))}
                 </ul>
+                ) : null}
               </div>
             </>
           )}
