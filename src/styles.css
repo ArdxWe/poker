@@ -1319,6 +1319,40 @@ h1 .when-clock {
   border-bottom: 1px solid var(--line);
 }
 
+.history-toggle {
+  width: 100%;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+  font-weight: inherit;
+}
+
+.history-toggle:active {
+  transform: none;
+}
+
+.history-caret {
+  justify-self: end;
+  color: var(--muted);
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 1;
+  transition: transform 0.15s ease;
+}
+
+.history-toggle[aria-expanded='true'] .history-caret {
+  transform: rotate(90deg);
+}
+
+.history-toggle:hover .history-caret,
+.history-toggle:focus-visible .history-caret {
+  color: var(--ink);
+}
+
 .board-title .share {
   min-height: 2.15rem;
   padding: 0 0.9rem;
