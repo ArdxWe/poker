@@ -37,6 +37,13 @@ import { loadSession, saveSession } from './storage'
 
 const clubClient = createBrowserClubClient()
 
+function formatPlayedAt(playedAt: string) {
+  const date = new Date(playedAt)
+  const day = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  const clock = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+  return `${day}, ${clock}`
+}
+
 function PlayedAt({ playedAt }: { playedAt: string }) {
   const date = new Date(playedAt)
   const day = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
@@ -68,6 +75,7 @@ export function App() {
   const [openSharedGameId, setOpenSharedGameId] = useState<string | null>(null)
   const [confirmingGameId, setConfirmingGameId] = useState<string | null>(null)
   const [shareFlash, setShareFlash] = useState('')
+  const [shareFlashFor, setShareFlashFor] = useState('')
   const [session, setSession] = useState<Session>(loadSession)
   const [opened, setOpened] = useState<ClubRecord | null>(() => clubClient.cached())
   const [booting, setBooting] = useState(() => clubClient.hasSession() && clubClient.cached() === null)
@@ -369,11 +377,12 @@ export function App() {
 
   function switchClub() {
     setAskingPassword(true)
-    setCreating(true)
+    setCreating(false)
     setPage('club')
     setOpenGameId(null)
     setDoorMessage('')
     setWriteError('')
+    setReadPassword('')
   }
 
   function leaveDoor() {
@@ -451,7 +460,8 @@ export function App() {
     setCopiedPassword(true)
   }
 
-  async function copyShareLink(url: string) {
+  async function copyShareLink(url: string, flashFor: string) {
+    setShareFlashFor(flashFor)
     try {
       await navigator.clipboard.writeText(url)
       setShareFlash('Link copied')
@@ -461,19 +471,29 @@ export function App() {
     }
   }
 
+  function shareLabel(id: string, idle: string) {
+    return shareFlashFor === id && shareFlash ? shareFlash : idle
+  }
+
   function shareOpenGame() {
     if (!openGame) return
-    void copyShareLink(buildShareUrl(openGame))
+    void copyShareLink(buildShareUrl(openGame), 'open')
+  }
+
+  function shareListedGame(game: Game) {
+    setConfirmingGameId(null)
+    void copyShareLink(buildShareUrl(game), game.id)
   }
 
   function shareClub() {
     const url = buildClubShareUrl(club)
     if (!url) {
+      setShareFlashFor('club')
       setShareFlash('Too big')
       return
     }
     setConfirmingGameId(null)
-    void copyShareLink(url)
+    void copyShareLink(url, 'club')
   }
 
   const viewingGame = sharedClub === null && page === 'club' && openGame !== null
@@ -484,6 +504,7 @@ export function App() {
     <main className="sheet">
       <div className="frame">
       <header>
+        <div className="title-block">
         <h1 className={displayedGame ? (displayedGame.title ? 'dated' : 'dated untitled') : 'home'}>
           {displayedGame ? (
             displayedGame.title || <PlayedAt playedAt={displayedGame.playedAt} />
@@ -497,21 +518,29 @@ export function App() {
             'Poker club'
           )}
         </h1>
+        </div>
         {displayedGame ? (
-          <button
-            type="button"
-            className="nav-link"
-            onClick={sharedClub && !sharedGame ? showSharedClub : isSharedView ? closeSharedView : showClub}
-          >
-            {sharedClub && !sharedGame ? '← Club' : isSharedView ? '← Open app' : '← My club'}
-          </button>
+          <div className="header-actions">
+            {!isSharedView ? (
+              <button type="button" className="nav-link" onClick={shareOpenGame}>
+                {shareLabel('open', 'Share game')}
+              </button>
+            ) : null}
+            <button
+              type="button"
+              className="nav-link"
+              onClick={sharedClub && !sharedGame ? showSharedClub : isSharedView ? closeSharedView : showClub}
+            >
+              {sharedClub && !sharedGame ? '← Club' : isSharedView ? 'Open app' : '← My club'}
+            </button>
+          </div>
         ) : sharedClub ? (
           <button type="button" className="nav-link" onClick={closeSharedView}>
-            ← Open app
+            Open app
           </button>
         ) : issued ? null : askingPassword && !creating ? (
           <button type="button" className="nav-link" onClick={showCreateClub}>
-            Back
+            {opened ? 'Create club' : 'Back'}
           </button>
         ) : askingPassword ? (
           <button type="button" className="nav-link" onClick={showOpenClub}>
@@ -523,11 +552,6 @@ export function App() {
           </button>
         ) : (
           <div className="header-actions">
-            {opened && !sharedClub ? (
-              <button type="button" className="nav-link" onClick={switchClub}>
-                Switch club
-              </button>
-            ) : null}
             <button type="button" className="new-game" onClick={showNewGame}>
               New game
             </button>
@@ -537,44 +561,31 @@ export function App() {
 
       {displayedGame ? (
         <section className="history">
-          {isSharedView ? <p className="share-note">Shared game · read only</p> : null}
-          {displayedGame.title ? (
-            <p className="played-at">
-              <PlayedAt playedAt={displayedGame.playedAt} />
-            </p>
-          ) : null}
-          <div className="unit">
-            <span>One buy-in</span>
-            <span className="unit-end">
-              <strong>{formatAmount(displayedGame.oneBuyIn)}</strong>
-              {!isSharedView ? (
-                <button type="button" className="share" onClick={shareOpenGame}>
-                  {shareFlash || 'Share'}
-                </button>
-              ) : null}
-            </span>
+          <div className="hand-head">
+            <span>Name</span>
+            <span>Buy-in</span>
+            <span>Left</span>
+            <span>Net</span>
           </div>
-          <div className="board">
-            <div className="hand-columns" aria-hidden="true">
-              <span>Name</span>
-              <span>Buy-ins</span>
-              <span>Left</span>
-              <span>Net</span>
-            </div>
-            <ul className="hand">
-              {playersByNet(displayedGame.players).map((player) => {
-                const tone = player.net > 0 ? 'up' : player.net < 0 ? 'down' : 'even'
-                return (
-                  <li key={player.name.toLocaleLowerCase()}>
-                    <span>{player.name}</span>
-                    <span>{player.buyIns}</span>
-                    <span>{formatAmount(player.left)}</span>
-                    <span className={tone}>{formatSigned(player.net)}</span>
-                  </li>
-                )
-              })}
-            </ul>
-          </div>
+          <ul className="hand">
+            {playersByNet(displayedGame.players).map((player) => {
+              const tone = player.net > 0 ? 'up' : player.net < 0 ? 'down' : 'even'
+              return (
+                <li key={player.name.toLocaleLowerCase()}>
+                  <span className="hand-name">{player.name}</span>
+                  <span className="hand-qty">{player.buyIns}</span>
+                  <span className="hand-qty">{formatAmount(player.left)}</span>
+                  <span className={`hand-net ${tone}`}>{formatSigned(player.net)}</span>
+                </li>
+              )
+            })}
+          </ul>
+          <p className="hand-when">
+            <span>Buy-in {formatAmount(displayedGame.oneBuyIn)}</span>
+            {displayedGame.title ? (
+              <time dateTime={displayedGame.playedAt}>{formatPlayedAt(displayedGame.playedAt)}</time>
+            ) : null}
+          </p>
         </section>
       ) : issued && !sharedClub ? (
         <section className="pass-page">
@@ -636,6 +647,11 @@ export function App() {
               <button type="submit" className="record">
                 Open club
               </button>
+              {opened ? (
+                <button type="button" className="nav-link" onClick={leaveDoor}>
+                  Back
+                </button>
+              ) : null}
             </form>
           )}
           {doorMessage ? <p className="share-note">{doorMessage}</p> : null}
@@ -671,14 +687,9 @@ export function App() {
                   })}
                 </ol>
               </div>
-              <div className="board">
+              <div className="board club-games">
                 <div className="board-title">
                   <h2>Game history</h2>
-                  {sharedClub || !opened ? null : (
-                    <button type="button" className="nav-link" onClick={shareClub}>
-                      {shareFlash || 'Share'}
-                    </button>
-                  )}
                 </div>
                 <ul className={sharedClub ? 'games readonly' : 'games'}>
                 {shownClub.map((game) => (
@@ -713,6 +724,9 @@ export function App() {
                           {game.title ? <span className="game-title">{game.title}</span> : null}
                           <PlayedAt playedAt={game.playedAt} />
                         </button>
+                        <button type="button" className="nav-link game-share" onClick={() => shareListedGame(game)}>
+                          {shareLabel(game.id, 'Share')}
+                        </button>
                         {sharedClub || !opened ? null : (
                           <button type="button" className="remove" onClick={() => setConfirmingGameId(game.id)}>
                             Remove
@@ -726,6 +740,18 @@ export function App() {
               </div>
             </>
           )}
+          {!sharedClub && opened && !booting ? (
+            <p className="club-foot">
+              <button type="button" className="nav-link" onClick={switchClub}>
+                Switch club
+              </button>
+              {shownClub.length > 0 ? (
+                <button type="button" className="nav-link" onClick={shareClub}>
+                  {shareLabel('club', 'Share club')}
+                </button>
+              ) : null}
+            </p>
+          ) : null}
         </section>
       ) : (
         <section className="game-page">
