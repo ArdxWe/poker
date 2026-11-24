@@ -28,7 +28,12 @@ function rememberedToken(): string {
 
 function readToken(): string {
   try {
-    return sessionStorage.getItem(TOKEN_KEY) ?? rememberedToken()
+    const sessionToken = sessionStorage.getItem(TOKEN_KEY)
+    if (sessionToken) return sessionToken
+    const token = rememberedToken()
+    // Copy the remembered token into this tab so later saves update the shared club.
+    if (token) sessionStorage.setItem(TOKEN_KEY, token)
+    return token
   } catch {
     return rememberedToken()
   }
