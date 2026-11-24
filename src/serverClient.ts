@@ -49,7 +49,10 @@ function clearToken(token: string) {
   sessionStorage.removeItem(TOKEN_KEY)
   sessionStorage.removeItem(CLUB_KEY)
   try {
-    if (rememberedToken() === token) localStorage.removeItem(TOKEN_KEY)
+    if (rememberedToken() === token) {
+      localStorage.removeItem(TOKEN_KEY)
+      localStorage.removeItem(CLUB_KEY)
+    }
   } catch {
     // The current tab's session has already been cleared.
   }
@@ -58,6 +61,12 @@ function clearToken(token: string) {
 export function pendingPassword(): string | null {
   try {
     const password = sessionStorage.getItem(ISSUED_KEY)
+    if (password) return password
+  } catch {
+    // Fall through to the remembered password.
+  }
+  try {
+    const password = localStorage.getItem(ISSUED_KEY)
     return password ? password : null
   } catch {
     return null
@@ -70,15 +79,25 @@ export function clearPendingPassword() {
   } catch {
     // sessionStorage can throw when storage is blocked.
   }
+  try {
+    localStorage.removeItem(ISSUED_KEY)
+  } catch {
+    // The current tab has already dropped the password.
+  }
 }
 
 function writePendingPassword(password: string) {
   sessionStorage.setItem(ISSUED_KEY, password)
+  try {
+    localStorage.setItem(ISSUED_KEY, password)
+  } catch {
+    // The current tab can still show the password.
+  }
 }
 
-function readCachedClub(): ClubRecord | null {
+function readStoredClub(storage: Storage): ClubRecord | null {
   try {
-    const raw = sessionStorage.getItem(CLUB_KEY)
+    const raw = storage.getItem(CLUB_KEY)
     if (!raw) return null
     const parsed: unknown = JSON.parse(raw)
     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null
@@ -90,8 +109,26 @@ function readCachedClub(): ClubRecord | null {
   }
 }
 
+function readCachedClub(): ClubRecord | null {
+  const sessionClub = readStoredClub(sessionStorage)
+  if (sessionClub) return sessionClub
+  try {
+    const sessionToken = sessionStorage.getItem(TOKEN_KEY)
+    if (sessionToken && sessionToken !== rememberedToken()) return null
+  } catch {
+    // No session token is available, so use the remembered club.
+  }
+  return readStoredClub(localStorage)
+}
+
 function rememberClub(club: ClubRecord): ClubRecord {
-  sessionStorage.setItem(CLUB_KEY, JSON.stringify(club))
+  const raw = JSON.stringify(club)
+  sessionStorage.setItem(CLUB_KEY, raw)
+  try {
+    if (sessionStorage.getItem(TOKEN_KEY) === rememberedToken()) localStorage.setItem(CLUB_KEY, raw)
+  } catch {
+    // The current tab can still use its session.
+  }
   return club
 }
 
@@ -194,8 +231,8 @@ export function createBrowserClubClient(): ClubClient {
       }
       const club = asClub(result)
       noteClubChange()
-      writeToken(result.token)
       writePendingPassword(input.readPassword)
+      writeToken(result.token)
       return { ok: true, club: rememberClub(club) }
     },
     remember() {},
