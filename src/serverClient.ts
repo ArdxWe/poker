@@ -18,21 +18,41 @@ function noteClubChange() {
   generation += 1
 }
 
-function readToken(): string {
+function rememberedToken(): string {
   try {
-    return sessionStorage.getItem(TOKEN_KEY) ?? ''
+    return localStorage.getItem(TOKEN_KEY) ?? ''
   } catch {
     return ''
   }
 }
 
-function writeToken(token: string) {
-  sessionStorage.setItem(TOKEN_KEY, token)
+function readToken(): string {
+  try {
+    return sessionStorage.getItem(TOKEN_KEY) ?? rememberedToken()
+  } catch {
+    return rememberedToken()
+  }
 }
 
-function clearToken() {
+function writeToken(token: string, remember = true) {
+  sessionStorage.setItem(TOKEN_KEY, token)
+  if (remember) {
+    try {
+      localStorage.setItem(TOKEN_KEY, token)
+    } catch {
+      // The current tab can still use its session.
+    }
+  }
+}
+
+function clearToken(token: string) {
   sessionStorage.removeItem(TOKEN_KEY)
   sessionStorage.removeItem(CLUB_KEY)
+  try {
+    if (rememberedToken() === token) localStorage.removeItem(TOKEN_KEY)
+  } catch {
+    // The current tab's session has already been cleared.
+  }
 }
 
 export function pendingPassword(): string | null {
@@ -137,10 +157,10 @@ export function createBrowserClubClient(): ClubClient {
       // This tab opened or edited a club while the request was in flight.
       if (seen !== clubGeneration()) return readToken() ? readCachedClub() : null
       if (!result.ok) {
-        clearToken()
+        clearToken(token)
         return null
       }
-      writeToken(result.token)
+      writeToken(result.token, !rememberedToken())
       return rememberClub(asClub(result))
     },
     async refresh(club) {

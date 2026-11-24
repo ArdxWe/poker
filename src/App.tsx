@@ -86,7 +86,8 @@ export function App() {
   const [readPassword, setReadPassword] = useState('')
   const [newClubName, setNewClubName] = useState(() => (legacyGames().length > 0 ? legacyClubName() : ''))
   const [doorMessage, setDoorMessage] = useState('')
-  const [creating, setCreating] = useState(true)
+  const [creating, setCreating] = useState(false)
+  const [importHistory, setImportHistory] = useState(false)
   const [writeError, setWriteError] = useState('')
   const [issued, setIssued] = useState<{ password: string } | null>(() => {
     const password = pendingPassword()
@@ -329,6 +330,7 @@ export function App() {
       setDoorMessage('Add a club name.')
       return
     }
+    const gamesToImport = importHistory ? phoneGames : []
     for (let attempt = 0; attempt < 5; attempt += 1) {
       const password = generatePassword()
       let created: Awaited<ReturnType<typeof clubClient.create>>
@@ -337,7 +339,7 @@ export function App() {
           name: newClubName,
           readPassword: password,
           writePassword: password,
-          games: phoneGames,
+          games: gamesToImport,
         })
       } catch {
         setDoorMessage('Could not create the club. Try again.')
@@ -358,7 +360,8 @@ export function App() {
         }
         continue
       }
-      const uploaded = phoneGames.every((game) => created.club.games.some((saved) => saved.id === game.id))
+      const uploaded = gamesToImport.length > 0
+        && gamesToImport.every((game) => created.club.games.some((saved) => saved.id === game.id))
       if (uploaded) {
         clearLegacyGames()
         setPhoneGames([])
@@ -366,7 +369,8 @@ export function App() {
       setOpened(created.club)
       setIssued({ password })
       setAskingPassword(false)
-      setCreating(true)
+      setCreating(false)
+      setImportHistory(false)
       setDoorMessage('')
       setReadPassword('')
       setNewClubName('')
@@ -388,7 +392,7 @@ export function App() {
 
   function leaveDoor() {
     setAskingPassword(false)
-    setCreating(true)
+    setCreating(false)
     setDoorMessage('')
   }
 
@@ -539,15 +543,7 @@ export function App() {
           <button type="button" className="nav-link" onClick={closeSharedView}>
             Open app
           </button>
-        ) : issued ? null : askingPassword && !creating ? (
-          <button type="button" className="nav-link" onClick={showCreateClub}>
-            {opened ? 'Create club' : 'Back'}
-          </button>
-        ) : askingPassword ? (
-          <button type="button" className="nav-link" onClick={showOpenClub}>
-            Open club
-          </button>
-        ) : page === 'game' ? (
+        ) : issued || askingPassword ? null : page === 'game' ? (
           <button type="button" className="nav-link" onClick={showClub}>
             My club
           </button>
@@ -590,11 +586,12 @@ export function App() {
         </section>
       ) : issued && !sharedClub ? (
         <section className="pass-page">
-          <p className="share-note">Shown once. Save it.</p>
+          <h2>Club password</h2>
+          <p className="share-note">Copy and save this password before entering. Use it to return to your club or share it with friends so they can join and edit games.</p>
           <p className="pass-code">
             <strong>{issued.password}</strong>
             <button type="button" className="nav-link" onClick={() => void copyPassword(issued.password)}>
-              {copiedPassword ? 'Copied' : 'Copy'}
+              {copiedPassword ? 'Copied' : 'Copy password'}
             </button>
           </p>
           <button
@@ -614,48 +611,54 @@ export function App() {
         <section className="door">
           {creating ? (
             <form onSubmit={createClubDoor}>
+              <h2>Create a club</h2>
               <label>
                 Club name
-                <input value={newClubName} onChange={(event) => setNewClubName(event.target.value)} />
+                <input required value={newClubName} onChange={(event) => setNewClubName(event.target.value)} />
               </label>
               <p className="share-note">
-                {phoneGames.length > 0
-                  ? phoneGames.length === 1
-                    ? 'Saves 1 game from this phone.'
-                    : `Saves ${phoneGames.length} games from this phone.`
-                  : 'A password is created for you.'}
+                We'll generate a club password. Save it to return later, and share it with friends who should be able to join and edit games.
               </p>
+              {phoneGames.length > 0 ? (
+                <label className="import-history">
+                  <input type="checkbox" checked={importHistory} onChange={(event) => setImportHistory(event.target.checked)} />
+                  Move {phoneGames.length} saved {phoneGames.length === 1 ? 'game' : 'games'} from this browser into the club
+                </label>
+              ) : null}
               <button type="submit" className="record">
                 Create club
               </button>
-              {opened ? (
-                <button type="button" className="nav-link" onClick={leaveDoor}>
-                  Back
-                </button>
-              ) : null}
+              <button type="button" className="nav-link" onClick={showOpenClub}>
+                Back to join
+              </button>
             </form>
           ) : (
             <form onSubmit={openClubDoor}>
+              <h2>Join a club</h2>
               <label>
-                Password
+                Club password
                 <input
                   type="password"
+                  required
                   autoComplete="current-password"
                   value={readPassword}
                   onChange={(event) => setReadPassword(event.target.value)}
                 />
               </label>
               <button type="submit" className="record">
-                Open club
+                Join club
+              </button>
+              <button type="button" className="nav-link" onClick={showCreateClub}>
+                Create a club
               </button>
               {opened ? (
                 <button type="button" className="nav-link" onClick={leaveDoor}>
-                  Back
+                  Back to {opened.name}
                 </button>
               ) : null}
             </form>
           )}
-          {doorMessage ? <p className="share-note">{doorMessage}</p> : null}
+          {doorMessage ? <p className="share-note" role="alert">{doorMessage}</p> : null}
         </section>
       ) : page === 'club' || sharedClub ? (
         <section className="club">

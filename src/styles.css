@@ -1101,13 +1101,13 @@ h1 .when-clock {
   gap: 0.85rem;
 }
 
-.door > .nav-link,
 .door form .nav-link {
   align-self: flex-start;
   width: auto;
 }
 
-.door h2 {
+.door h2,
+.pass-page h2 {
   margin: 0;
   font-size: 1.05rem;
   font-weight: 600;
@@ -1122,12 +1122,6 @@ h1 .when-clock {
   border: 0;
 }
 
-.door form + form {
-  margin-top: 0.6rem;
-  padding-top: 1.35rem;
-  border-top: 1px solid var(--line);
-}
-
 .door label {
   display: flex;
   flex-direction: column;
@@ -1137,7 +1131,17 @@ h1 .when-clock {
   font-weight: 600;
 }
 
-.door input,
+.door .import-history {
+  flex-direction: row;
+  align-items: baseline;
+}
+
+.import-history input {
+  flex: none;
+  accent-color: var(--felt);
+}
+
+.door input:not([type='checkbox']),
 .row-confirm input,
 .save-name input[type='password'] {
   min-height: 2.55rem;
@@ -1148,7 +1152,7 @@ h1 .when-clock {
   font-size: 1.05rem;
 }
 
-.door input:focus,
+.door input:not([type='checkbox']):focus,
 .row-confirm input:focus,
 .save-name input[type='password']:focus {
   border-color: var(--felt);
