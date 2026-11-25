@@ -18,26 +18,60 @@ function noteClubChange() {
   generation += 1
 }
 
-function readToken(): string {
+function rememberedToken(): string {
   try {
-    return sessionStorage.getItem(TOKEN_KEY) ?? ''
+    return localStorage.getItem(TOKEN_KEY) ?? ''
   } catch {
     return ''
   }
 }
 
-function writeToken(token: string) {
-  sessionStorage.setItem(TOKEN_KEY, token)
+function readToken(): string {
+  try {
+    const sessionToken = sessionStorage.getItem(TOKEN_KEY)
+    if (sessionToken) return sessionToken
+    const token = rememberedToken()
+    // Copy the remembered token into this tab so later saves update the shared club.
+    if (token) sessionStorage.setItem(TOKEN_KEY, token)
+    return token
+  } catch {
+    return rememberedToken()
+  }
 }
 
-function clearToken() {
+function writeToken(token: string, remember = true) {
+  sessionStorage.setItem(TOKEN_KEY, token)
+  if (remember) {
+    try {
+      localStorage.setItem(TOKEN_KEY, token)
+    } catch {
+      // The current tab can still use its session.
+    }
+  }
+}
+
+function clearToken(token: string) {
   sessionStorage.removeItem(TOKEN_KEY)
   sessionStorage.removeItem(CLUB_KEY)
+  try {
+    if (rememberedToken() === token) {
+      localStorage.removeItem(TOKEN_KEY)
+      localStorage.removeItem(CLUB_KEY)
+    }
+  } catch {
+    // The current tab's session has already been cleared.
+  }
 }
 
 export function pendingPassword(): string | null {
   try {
     const password = sessionStorage.getItem(ISSUED_KEY)
+    if (password) return password
+  } catch {
+    // Fall through to the remembered password.
+  }
+  try {
+    const password = localStorage.getItem(ISSUED_KEY)
     return password ? password : null
   } catch {
     return null
@@ -50,15 +84,25 @@ export function clearPendingPassword() {
   } catch {
     // sessionStorage can throw when storage is blocked.
   }
+  try {
+    localStorage.removeItem(ISSUED_KEY)
+  } catch {
+    // The current tab has already dropped the password.
+  }
 }
 
 function writePendingPassword(password: string) {
   sessionStorage.setItem(ISSUED_KEY, password)
+  try {
+    localStorage.setItem(ISSUED_KEY, password)
+  } catch {
+    // The current tab can still show the password.
+  }
 }
 
-function readCachedClub(): ClubRecord | null {
+function readStoredClub(storage: Storage): ClubRecord | null {
   try {
-    const raw = sessionStorage.getItem(CLUB_KEY)
+    const raw = storage.getItem(CLUB_KEY)
     if (!raw) return null
     const parsed: unknown = JSON.parse(raw)
     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null
@@ -70,8 +114,26 @@ function readCachedClub(): ClubRecord | null {
   }
 }
 
+function readCachedClub(): ClubRecord | null {
+  const sessionClub = readStoredClub(sessionStorage)
+  if (sessionClub) return sessionClub
+  try {
+    const sessionToken = sessionStorage.getItem(TOKEN_KEY)
+    if (sessionToken && sessionToken !== rememberedToken()) return null
+  } catch {
+    // No session token is available, so use the remembered club.
+  }
+  return readStoredClub(localStorage)
+}
+
 function rememberClub(club: ClubRecord): ClubRecord {
-  sessionStorage.setItem(CLUB_KEY, JSON.stringify(club))
+  const raw = JSON.stringify(club)
+  sessionStorage.setItem(CLUB_KEY, raw)
+  try {
+    if (sessionStorage.getItem(TOKEN_KEY) === rememberedToken()) localStorage.setItem(CLUB_KEY, raw)
+  } catch {
+    // The current tab can still use its session.
+  }
   return club
 }
 
@@ -137,10 +199,10 @@ export function createBrowserClubClient(): ClubClient {
       // This tab opened or edited a club while the request was in flight.
       if (seen !== clubGeneration()) return readToken() ? readCachedClub() : null
       if (!result.ok) {
-        clearToken()
+        clearToken(token)
         return null
       }
-      writeToken(result.token)
+      writeToken(result.token, !rememberedToken())
       return rememberClub(asClub(result))
     },
     async refresh(club) {
@@ -174,8 +236,8 @@ export function createBrowserClubClient(): ClubClient {
       }
       const club = asClub(result)
       noteClubChange()
-      writeToken(result.token)
       writePendingPassword(input.readPassword)
+      writeToken(result.token)
       return { ok: true, club: rememberClub(club) }
     },
     remember() {},
