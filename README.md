@@ -44,4 +44,4 @@ Push to `main` rebuilds and publishes automatically.
 
 ## Todo
 
-- [ ] Ship Android and iOS apps
+- [ ] Ship Android and iOS apps. Android plan: [docs/android-plan.md](docs/android-plan.md)（中文）
